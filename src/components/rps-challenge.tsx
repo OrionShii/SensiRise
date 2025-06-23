@@ -27,7 +27,10 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
   const [result, setResult] = useState<DetectHandGestureOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const { toast } = useToast();
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
 
   const setupCamera = useCallback(async () => {
     if (typeof window === 'undefined' || !navigator.mediaDevices) {
@@ -46,10 +49,13 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
     }
   }, []);
 
+  // Cleanup interval on unmount
   useEffect(() => {
     setupCamera();
-
     return () => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
       if (videoRef.current && videoRef.current.srcObject) {
         const stream = videoRef.current.srcObject as MediaStream;
         stream.getTracks().forEach((track) => track.stop());
@@ -58,18 +64,23 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
   }, [setupCamera]);
 
   const captureAndPlay = async () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current) {
+        setIsLoading(false);
+        return;
+    }
     
-    setIsLoading(true);
+    // isLoading is already true
     setError(null);
-    setResult(null);
 
     const canvas = canvasRef.current;
     const video = videoRef.current;
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const context = canvas.getContext("2d");
-    if (!context) return;
+    if (!context) {
+        setIsLoading(false);
+        return;
+    }
     
     context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
     const photoDataUri = canvas.toDataURL("image/jpeg");
@@ -108,10 +119,33 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
     }
   };
 
+  const startCountdownAndPlay = () => {
+      if (isLoading || (result?.result === 'win')) return;
+      
+      setIsLoading(true);
+      setError(null);
+      setResult(null);
+      setCountdown(3);
+
+      countdownIntervalRef.current = setInterval(() => {
+          setCountdown(prev => {
+              if (prev === null || prev <= 1) {
+                  if(countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+                  setCountdown(null);
+                  captureAndPlay();
+                  return null;
+              }
+              return prev - 1;
+          });
+      }, 1000);
+  }
+
   const resetGame = () => {
     setResult(null);
     setError(null);
     setIsLoading(false);
+    if(countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    setCountdown(null);
   }
 
   const renderResult = () => {
@@ -148,6 +182,11 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
           </div>
         )}
         <video ref={videoRef} className={`w-full h-full object-cover transform -scale-x-100 ${hasCameraPermission ? '' : 'hidden'}`} playsInline muted autoPlay />
+        {countdown !== null && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 pointer-events-none">
+            <p className="text-8xl font-bold text-white drop-shadow-lg">{countdown}</p>
+          </div>
+        )}
       </div>
 
       {result && (
@@ -167,15 +206,16 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
       )}
 
       <div className="h-16 flex items-center justify-center">
-        {isLoading ? (
+        {isLoading && countdown === null ? (
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         ) : (
           renderResult()
         )}
       </div>
 
-      <Button onClick={captureAndPlay} disabled={isLoading || (result && result.result === 'win')} className="w-full max-w-xs bg-accent text-accent-foreground hover:bg-accent/90">
-        <Hand className="mr-2" /> Play Rock, Paper, Scissors
+      <Button onClick={startCountdownAndPlay} disabled={isLoading || (result && result.result === 'win') || !hasCameraPermission} className="w-full max-w-xs bg-accent text-accent-foreground hover:bg-accent/90">
+        <Hand className="mr-2" /> 
+        {countdown !== null ? 'Get Ready!' : (result?.result === 'win' ? 'You Won!' : 'Play Rock, Paper, Scissors')}
       </Button>
       <p className="text-xs text-center text-muted-foreground max-w-xs">
         Win a game of rock-paper-scissors to turn off the alarm. Show your hand to the camera.
