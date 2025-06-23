@@ -83,6 +83,7 @@ export default function SensiRiseApp() {
                   onChange={(e) => setAlarmTime(e.target.value)}
                   className="text-2xl font-bold bg-transparent border-none focus:ring-0 p-0 w-36"
                   disabled={isAlarmOn}
+                  suppressHydrationWarning
                 />
               </div>
               <div className="flex items-center space-x-2">
@@ -96,6 +97,7 @@ export default function SensiRiseApp() {
                   checked={isAlarmOn}
                   onCheckedChange={setIsAlarmOn}
                   aria-label="Toggle alarm"
+                  suppressHydrationWarning
                 />
               </div>
             </div>
@@ -103,6 +105,7 @@ export default function SensiRiseApp() {
               onClick={() => setIsAlarmRinging(true)}
               className="w-full"
               size="lg"
+              suppressHydrationWarning
             >
               Test Deactivation Challenge
             </Button>
