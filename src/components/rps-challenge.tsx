@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { detectHandGesture, DetectHandGestureOutput } from "@/ai/flows/detect-hand-gesture";
 import { useToast } from "@/hooks/use-toast";
-import { Hand, Scissors, Paperclip, AlertTriangle, Loader2, CheckCircle, RefreshCw } from "lucide-react";
+import { Hand, Scissors, AlertTriangle, Loader2, CheckCircle, RefreshCw } from "lucide-react";
 
 type RpsChallengeProps = {
   onChallengeComplete: () => void;
@@ -13,7 +13,7 @@ type RpsChallengeProps = {
 const GestureIcon = ({ gesture }: { gesture: string | undefined }) => {
   switch (gesture) {
     case "rock": return <Hand className="w-10 h-10 transform -rotate-90" />;
-    case "paper": return <Paperclip className="w-10 h-10 transform -rotate-45" />;
+    case "paper": return <Hand className="w-10 h-10" />;
     case "scissors": return <Scissors className="w-10 h-10" />;
     default: return null;
   }
@@ -37,7 +37,6 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
         setHasCameraPermission(true);
       }
     } catch (err) {
@@ -148,7 +147,7 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
             <p className="mt-2 font-semibold">Accessing Camera...</p>
           </div>
         )}
-        <video ref={videoRef} className={`w-full h-full object-cover transform -scale-x-100 ${hasCameraPermission ? '' : 'hidden'}`} playsInline />
+        <video ref={videoRef} className={`w-full h-full object-cover transform -scale-x-100 ${hasCameraPermission ? '' : 'hidden'}`} playsInline muted autoPlay />
       </div>
 
       {result && (
