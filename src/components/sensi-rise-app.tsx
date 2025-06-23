@@ -14,9 +14,11 @@ export default function SensiRiseApp() {
   const [alarmTime, setAlarmTime] = useState("07:00");
   const [isAlarmOn, setIsAlarmOn] = useState(true);
   const [isAlarmRinging, setIsAlarmRinging] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
+    setIsMounted(true);
     setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
@@ -67,7 +69,7 @@ export default function SensiRiseApp() {
         <CardContent>
           <div className="flex flex-col items-center space-y-8">
             <div className="text-7xl md:text-8xl font-bold text-foreground font-mono tracking-tighter">
-              {formattedTime}
+              {isMounted ? formattedTime : "--:--"}
             </div>
             <div className="flex items-center space-x-4 p-4 rounded-lg bg-background w-full justify-between">
               <div className="flex flex-col">
