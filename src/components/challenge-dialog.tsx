@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FaceScanChallenge } from "@/components/face-scan-challenge";
 import { RpsChallenge } from "@/components/rps-challenge";
 import { MathChallenge } from "@/components/math-challenge";
-import { Smile, Puzzle, Hand } from "lucide-react";
+import { Eye, Puzzle, Hand } from "lucide-react";
 
 type ChallengeDialogProps = {
   open: boolean;
@@ -43,8 +43,8 @@ export function ChallengeDialog({
                 Math Quiz
               </TabsTrigger>
               <TabsTrigger value="face">
-                <Smile className="w-4 h-4 mr-2" />
-                Face Scan
+                <Eye className="w-4 h-4 mr-2" />
+                Awake Check
               </TabsTrigger>
             </TabsList>
             <TabsContent value="rps" className="pt-4">

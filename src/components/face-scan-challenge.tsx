@@ -29,6 +29,7 @@ export function FaceScanChallenge({ onChallengeComplete }: FaceScanChallengeProp
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.play();
         setHasCameraPermission(true);
       }
     } catch (err) {
@@ -73,19 +74,19 @@ export function FaceScanChallenge({ onChallengeComplete }: FaceScanChallengeProp
     const photoDataUri = canvas.toDataURL("image/jpeg");
 
     try {
-      const { isFaceDetected } = await detectFace({ photoDataUri });
-      if (isFaceDetected) {
+      const { isAwake } = await detectFace({ photoDataUri });
+      if (isAwake) {
         setIsComplete(true);
         toast({
-          title: "Face Detected!",
-          description: "Challenge passed successfully.",
+          title: "You're Awake!",
+          description: "Challenge passed. Good morning!",
         });
         setTimeout(onChallengeComplete, 1500);
       } else {
-        setError("No face detected. Please position your face clearly in the frame.");
+        setError("You don't seem to be awake. Please open your eyes and try again.");
         toast({
           title: "Scan Failed",
-          description: "No face was detected. Please try again.",
+          description: "We couldn't verify you're awake. Please try again.",
           variant: "destructive",
         });
       }
@@ -109,7 +110,7 @@ export function FaceScanChallenge({ onChallengeComplete }: FaceScanChallengeProp
         {isComplete ? (
           <div className="flex flex-col items-center text-green-500">
             <CheckCircle className="w-24 h-24" />
-            <p className="mt-4 text-lg font-semibold">Scan Complete!</p>
+            <p className="mt-4 text-lg font-semibold">You're Awake!</p>
           </div>
         ) : (
           <>
@@ -138,7 +139,7 @@ export function FaceScanChallenge({ onChallengeComplete }: FaceScanChallengeProp
         className="w-full max-w-xs bg-accent text-accent-foreground hover:bg-accent/90"
       >
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {isLoading ? "Scanning..." : isComplete ? "Done!" : "Scan Face"}
+        {isLoading ? "Analyzing..." : isComplete ? "Done!" : "I'm Awake"}
       </Button>
       
       {error && !isLoading && (
@@ -146,7 +147,7 @@ export function FaceScanChallenge({ onChallengeComplete }: FaceScanChallengeProp
       )}
 
       <p className="text-xs text-center text-muted-foreground max-w-xs">
-        Position your face in the frame to deactivate the alarm.
+        Look into the camera with your eyes open to prove you're awake.
       </p>
     </div>
   );
