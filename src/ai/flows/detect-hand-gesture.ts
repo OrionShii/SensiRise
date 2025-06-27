@@ -20,9 +20,12 @@ const DetectHandGestureInputSchema = z.object({
 });
 export type DetectHandGestureInput = z.infer<typeof DetectHandGestureInputSchema>;
 
+const gestures = ['rock', 'paper', 'scissors'] as const;
+type Gesture = (typeof gestures)[number];
+
 const DetectHandGestureOutputSchema = z.object({
-  userGesture: z.enum(['rock', 'paper', 'scissors']).describe('The hand gesture detected from the user.'),
-  appGesture: z.enum(['rock', 'paper', 'scissors']).describe('The hand gesture chosen by the application.'),
+  userGesture: z.enum(gestures).describe('The hand gesture detected from the user.'),
+  appGesture: z.enum(gestures).describe('The hand gesture chosen by the application.'),
   result: z.enum(['win', 'lose', 'draw']).describe('The result of the rock-paper-scissors game.'),
 });
 export type DetectHandGestureOutput = z.infer<typeof DetectHandGestureOutputSchema>;
@@ -31,13 +34,16 @@ export async function detectHandGesture(input: DetectHandGestureInput): Promise<
   return detectHandGestureFlow(input);
 }
 
+// Schema for just the gesture from the image
+const UserGestureOutputSchema = z.object({
+  userGesture: z.enum(gestures).describe('The hand gesture detected from the user (rock, paper, or scissors).'),
+});
+
 const prompt = ai.definePrompt({
   name: 'detectHandGesturePrompt',
   input: {schema: DetectHandGestureInputSchema},
-  output: {schema: DetectHandGestureOutputSchema},
-  prompt: `You are a rock-paper-scissors game expert. You will receive a photo of a user's hand gesture and determine whether it is rock, paper, or scissors. Then, you will randomly pick rock, paper, or scissors for the application.
-
-  Based on the user's gesture and the application's gesture, determine the winner. The possible results are win, lose, or draw.
+  output: {schema: UserGestureOutputSchema}, // Use the simpler output schema
+  prompt: `You are a rock-paper-scissors game expert. You will receive a photo of a user's hand gesture. Your only task is to determine whether it is rock, paper, or scissors and return the result.
 
   Photo: {{media url=photoDataUri}}
   `,
@@ -49,12 +55,36 @@ const detectHandGestureFlow = ai.defineFlow(
     inputSchema: DetectHandGestureInputSchema,
     outputSchema: DetectHandGestureOutputSchema,
   },
-  async input => {
+  async (input): Promise<DetectHandGestureOutput> => {
+    // 1. Get the user's gesture from the AI
     const {output} = await prompt(input);
-    // If the output is null or undefined, throw an error, otherwise return the result.
     if (!output) {
       throw new Error('The LLM did not return an output.');
     }
-    return output;
+    const {userGesture} = output;
+
+    // 2. The app randomly picks its gesture
+    const appGesture = gestures[Math.floor(Math.random() * gestures.length)];
+
+    // 3. Determine the winner with deterministic logic
+    let result: 'win' | 'lose' | 'draw';
+    if (userGesture === appGesture) {
+      result = 'draw';
+    } else if (
+      (userGesture === 'rock' && appGesture === 'scissors') ||
+      (userGesture === 'scissors' && appGesture === 'paper') ||
+      (userGesture === 'paper' && appGesture === 'rock')
+    ) {
+      result = 'win';
+    } else {
+      result = 'lose';
+    }
+
+    // 4. Return the full result
+    return {
+      userGesture,
+      appGesture,
+      result,
+    };
   }
 );
