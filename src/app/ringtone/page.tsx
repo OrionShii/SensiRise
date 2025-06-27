@@ -26,14 +26,20 @@ export default function RingtonePage() {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const handlePlay = (url: string) => {
-    if (audioRef.current) {
-      if (audioRef.current.src === url && !audioRef.current.paused) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-      } else {
-        audioRef.current.src = url;
-        audioRef.current.play().catch(e => console.error("Audio playback failed:", e));
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    // If the clicked ringtone is already playing, pause it.
+    if (audio.src === url && !audio.paused) {
+      audio.pause();
+    } else {
+      // Otherwise, play the new ringtone.
+      // Crucially, pause any existing audio first to prevent interruption errors.
+      if (!audio.paused) {
+        audio.pause();
       }
+      audio.src = url;
+      audio.play().catch(e => console.error("Audio playback failed:", e));
     }
   };
 
