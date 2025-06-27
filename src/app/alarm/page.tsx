@@ -94,7 +94,7 @@ export default function AlarmPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 animate-fade-in-up">
       <div className="flex flex-col items-start gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Alarms</h1>
         <p className="text-muted-foreground">
@@ -114,7 +114,7 @@ export default function AlarmPage() {
               return (
               <div key={alarm.id}>
                 {index > 0 && <Separator />}
-                <div className="flex items-center justify-between py-4">
+                <div className="flex items-center justify-between py-4 rounded-lg -mx-2 px-2 transition-colors hover:bg-muted/50">
                   <div className="flex items-center gap-4">
                     <span className={`text-2xl font-bold font-mono ${!alarm.enabled && 'text-muted-foreground/50 line-through'}`}>
                       {alarm.time}
@@ -160,7 +160,7 @@ export default function AlarmPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="transition-all duration-300 hover:shadow-lg">
         <CardHeader>
             <CardTitle>Add New Alarm</CardTitle>
             <CardDescription>Create a new alarm with a specific time, label, and challenge.</CardDescription>

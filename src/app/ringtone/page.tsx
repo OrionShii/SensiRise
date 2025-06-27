@@ -59,7 +59,7 @@ export default function RingtonePage() {
   };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 animate-fade-in-up">
       <audio ref={audioRef} onEnded={onAudioEnded} />
       <div className="flex flex-col items-start gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Ringtones</h1>
@@ -78,7 +78,7 @@ export default function RingtonePage() {
             {mockRingtones.map((ringtone, index) => (
               <div key={ringtone.id}>
                 {index > 0 && <Separator />}
-                <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors duration-200">
                   <span className="font-medium">{ringtone.name}</span>
                   <div className="flex items-center gap-2">
                     <Button

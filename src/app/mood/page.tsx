@@ -36,14 +36,14 @@ export default function MoodPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 animate-fade-in-up">
       <div className="flex flex-col items-start gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Log Your Mood</h1>
         <p className="text-muted-foreground">
           Manually enter your heart rate (BPM) to get a mood snapshot.
         </p>
       </div>
-      <Card>
+      <Card className="transition-all duration-300 hover:shadow-lg">
         <CardHeader>
           <CardTitle>Log Heart Rate</CardTitle>
           <CardDescription>
@@ -75,7 +75,7 @@ export default function MoodPage() {
       </Card>
       
       {mood && (
-        <Card>
+        <Card className="transition-all duration-300 hover:shadow-lg">
            <CardHeader>
               <CardTitle>Current Mood Analysis</CardTitle>
            </CardHeader>

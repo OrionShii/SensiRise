@@ -28,7 +28,7 @@ export default function HomePage() {
     .sort((a, b) => a.time.localeCompare(b.time));
 
   return (
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-8 animate-fade-in-up">
         <div className="flex flex-col items-start gap-2">
           <h1 className="text-3xl font-bold tracking-tight">Good morning, {userName}!</h1>
           <p className="text-muted-foreground">
@@ -37,7 +37,7 @@ export default function HomePage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
-          <Card className="flex flex-col">
+          <Card className="flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div className="space-y-1">
                   <CardTitle>Upcoming Alarms</CardTitle>
@@ -88,7 +88,7 @@ export default function HomePage() {
              </CardFooter>
           </Card>
 
-          <Card className="flex flex-col">
+          <Card className="flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
                <div className="space-y-1">
                   <CardTitle>Today's Mood</CardTitle>

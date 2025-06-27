@@ -24,7 +24,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 animate-fade-in-up">
       <div className="flex flex-col items-start gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
         <p className="text-muted-foreground">
@@ -32,7 +32,7 @@ export default function ProfilePage() {
         </p>
       </div>
       <form onSubmit={handleSaveChanges}>
-        <Card>
+        <Card className="transition-all duration-300 hover:shadow-lg">
           <CardHeader>
             <CardTitle>Account Information</CardTitle>
             <CardDescription>
