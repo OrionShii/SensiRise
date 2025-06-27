@@ -63,6 +63,8 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
 
   const captureAndPlay = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) {
+        setError("Camera not ready.");
+        setIsCountingDown(false);
         return;
     }
     
@@ -70,10 +72,18 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
 
     const canvas = canvasRef.current;
     const video = videoRef.current;
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      setError("Camera is still loading. Please try again.");
+      setIsCountingDown(false);
+      return;
+    }
+
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const context = canvas.getContext("2d");
     if (!context) {
+        setError("Could not get canvas context.");
+        setIsCountingDown(false);
         return;
     }
     
@@ -112,7 +122,7 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
         });
       }
     });
-  }, [onChallengeComplete, toast]);
+  }, [onChallengeComplete, toast, startTransition]);
 
   useEffect(() => {
     if (!isCountingDown || countdown === null) {
