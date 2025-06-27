@@ -11,6 +11,7 @@ import { Pencil, Trash2, PlusCircle, Gamepad2, BrainCircuit, ScanFace, ScanSearc
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChallengeDialog, ChallengeStep } from "@/components/challenge-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 type ChallengeType = 'none' | 'rps' | 'math' | 'face' | 'object';
 
@@ -40,12 +41,16 @@ const mockAlarms: Alarm[] = [
 export default function AlarmPage() {
   const [alarms, setAlarms] = useState<Alarm[]>(mockAlarms);
   const [newAlarmTime, setNewAlarmTime] = useState('08:00');
+  const [newAlarmLabel, setNewAlarmLabel] = useState('New Alarm');
   const [newAlarmChallenge, setNewAlarmChallenge] = useState<ChallengeType>('rps');
 
   const [isChallengeActive, setIsChallengeActive] = useState(false);
   const [activeChallenge, setActiveChallenge] = useState<ChallengeStep | null>(null);
   const [challengingAlarmId, setChallengingAlarmId] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingAlarm, setEditingAlarm] = useState<Alarm | null>(null);
 
   const handleToggleAlarm = (id: string) => {
     setAlarms(
@@ -65,10 +70,11 @@ export default function AlarmPage() {
         id: Date.now().toString(),
         time: newAlarmTime,
         enabled: true,
-        label: 'New Alarm',
+        label: newAlarmLabel,
         challenge: newAlarmChallenge,
       };
       setAlarms([...alarms, newAlarm]);
+      setNewAlarmLabel('New Alarm');
     }
   };
 
@@ -88,7 +94,6 @@ export default function AlarmPage() {
   const handleChallengeComplete = () => {
     setIsChallengeActive(false);
     if (challengingAlarmId) {
-      // Find the alarm and disable it
       setAlarms(
         alarms.map((alarm) =>
           alarm.id === challengingAlarmId ? { ...alarm, enabled: false } : alarm
@@ -100,6 +105,27 @@ export default function AlarmPage() {
       });
       setChallengingAlarmId(null);
       setActiveChallenge(null);
+    }
+  };
+
+  const handleOpenEditDialog = (alarm: Alarm) => {
+    setEditingAlarm({ ...alarm });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveChanges = () => {
+    if (editingAlarm) {
+      setAlarms(
+        alarms.map((alarm) =>
+          alarm.id === editingAlarm.id ? editingAlarm : alarm
+        )
+      );
+      toast({
+        title: "Alarm Updated",
+        description: "Your alarm settings have been successfully saved.",
+      });
+      setIsEditDialogOpen(false);
+      setEditingAlarm(null);
     }
   };
 
@@ -147,7 +173,7 @@ export default function AlarmPage() {
                       <Play className="h-4 w-4" />
                       <span className="sr-only">Test Challenge</span>
                     </Button>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" onClick={() => handleOpenEditDialog(alarm)}>
                       <Pencil className="h-4 w-4" />
                       <span className="sr-only">Edit Alarm</span>
                     </Button>
@@ -169,7 +195,7 @@ export default function AlarmPage() {
         </CardContent>
         <CardFooter className="flex flex-col items-start gap-4 border-t pt-6">
             <h3 className="font-semibold">Add New Alarm</h3>
-            <div className="grid w-full grid-cols-1 md:grid-cols-3 items-end gap-4">
+            <div className="grid w-full grid-cols-1 md:grid-cols-4 items-end gap-4">
               <div className="space-y-1">
                 <Label htmlFor="new-alarm-time">Alarm time</Label>
                 <Input 
@@ -177,6 +203,15 @@ export default function AlarmPage() {
                   type="time" 
                   value={newAlarmTime}
                   onChange={(e) => setNewAlarmTime(e.target.value)} 
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="new-alarm-label">Label</Label>
+                <Input
+                  id="new-alarm-label"
+                  value={newAlarmLabel}
+                  onChange={(e) => setNewAlarmLabel(e.target.value)}
+                  placeholder="e.g. Weekday Wake-up"
                 />
               </div>
               <div className="space-y-1">
@@ -209,12 +244,80 @@ export default function AlarmPage() {
             </div>
         </CardFooter>
       </Card>
+      
       <ChallengeDialog
         open={isChallengeActive}
         onOpenChange={setIsChallengeActive}
         onChallengeComplete={handleChallengeComplete}
         challenges={activeChallenge ? [activeChallenge] : []}
       />
+
+      {editingAlarm && (
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Alarm</DialogTitle>
+              <DialogDescription>
+                Make changes to your alarm here. Click save when you're done.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-time" className="text-right">
+                  Time
+                </Label>
+                <Input
+                  id="edit-time"
+                  type="time"
+                  value={editingAlarm.time}
+                  onChange={(e) => setEditingAlarm({ ...editingAlarm, time: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-label" className="text-right">
+                  Label
+                </Label>
+                <Input
+                  id="edit-label"
+                  value={editingAlarm.label}
+                  onChange={(e) => setEditingAlarm({ ...editingAlarm, label: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-challenge" className="text-right">
+                  Challenge
+                </Label>
+                <Select
+                  value={editingAlarm.challenge}
+                  onValueChange={(value) => setEditingAlarm({ ...editingAlarm, challenge: value as ChallengeType })}
+                >
+                  <SelectTrigger id="edit-challenge" className="col-span-3">
+                    <SelectValue placeholder="Select a challenge" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(challengeConfig) as ChallengeType[]).map((key) => {
+                      const ChallengeIcon = challengeConfig[key].icon;
+                      return (
+                        <SelectItem key={key} value={key}>
+                          <div className="flex items-center gap-2">
+                            {ChallengeIcon && <ChallengeIcon className="h-4 w-4 text-muted-foreground" />}
+                            <span>{challengeConfig[key].label}</span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" onClick={handleSaveChanges}>Save changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
