@@ -28,7 +28,7 @@ export default function RingtonePage() {
   const handlePlay = (url: string) => {
     const audio = audioRef.current;
     if (!audio) return;
-
+    
     // If the clicked ringtone is already playing, pause it.
     if (audio.src === url && !audio.paused) {
       audio.pause();

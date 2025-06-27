@@ -68,7 +68,7 @@ export default function AlarmPage() {
   const handleChallengeComplete = () => {
     setIsChallengeActive(false);
     if (challengingAlarmId) {
-      toggleAlarm(challengingAlarmId);
+      toggleAlarm(challengingAlarmId); // This will disable the alarm
       toast({
         title: "Alarm Deactivated!",
         description: "You have successfully completed the challenge.",
@@ -77,6 +77,7 @@ export default function AlarmPage() {
       setActiveChallenge(null);
     }
   };
+
 
   const handleOpenEditDialog = (alarm: Alarm) => {
     setEditingAlarm({ ...alarm });
