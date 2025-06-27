@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { detectHandGesture, DetectHandGestureOutput } from "@/ai/flows/detect-hand-gesture";
 import { useToast } from "@/hooks/use-toast";
@@ -23,14 +23,16 @@ const GestureIcon = ({ gesture }: { gesture: string | undefined }) => {
 export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isCountingDown, setIsCountingDown] = useState(false);
   const [result, setResult] = useState<DetectHandGestureOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const { toast } = useToast();
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isPending, startTransition] = useTransition();
 
+  const isBusy = isCountingDown || isPending;
 
   const setupCamera = useCallback(async () => {
     if (typeof window === 'undefined' || !navigator.mediaDevices) {
@@ -63,13 +65,11 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
     };
   }, [setupCamera]);
 
-  const captureAndPlay = async () => {
+  const captureAndPlay = () => {
     if (!videoRef.current || !canvasRef.current) {
-        setIsLoading(false);
         return;
     }
     
-    // isLoading is already true
     setError(null);
 
     const canvas = canvasRef.current;
@@ -78,51 +78,50 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
     canvas.height = video.videoHeight;
     const context = canvas.getContext("2d");
     if (!context) {
-        setIsLoading(false);
         return;
     }
     
     context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
     const photoDataUri = canvas.toDataURL("image/jpeg");
 
-    try {
-      const aiResult = await detectHandGesture({ photoDataUri });
-      setResult(aiResult);
-      if (aiResult.result === "win") {
+    startTransition(async () => {
+      try {
+        const aiResult = await detectHandGesture({ photoDataUri });
+        setResult(aiResult);
+        if (aiResult.result === "win") {
+          toast({
+            title: "You Win!",
+            description: "You've successfully beaten the challenge.",
+          });
+          setTimeout(onChallengeComplete, 1500);
+        } else if (aiResult.result === 'lose') {
+           toast({
+            title: "You Lose!",
+            description: "The app beat you. Try again!",
+            variant: "destructive"
+          });
+        } else {
+           toast({
+            title: "It's a Draw!",
+            description: "Nobody wins. Try again!",
+          });
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Could not detect gesture. Please try again.");
         toast({
-          title: "You Win!",
-          description: "You've successfully beaten the challenge.",
-        });
-        setTimeout(onChallengeComplete, 1500);
-      } else if (aiResult.result === 'lose') {
-         toast({
-          title: "You Lose!",
-          description: "The app beat you. Try again!",
+          title: "AI Error",
+          description: "Failed to process the image. Check your connection or try again.",
           variant: "destructive"
         });
-      } else {
-         toast({
-          title: "It's a Draw!",
-          description: "Nobody wins. Try again!",
-        });
       }
-    } catch (err) {
-      console.error(err);
-      setError("Could not detect gesture. Please try again.");
-      toast({
-        title: "AI Error",
-        description: "Failed to process the image. Check your connection or try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   const startCountdownAndPlay = () => {
-      if (isLoading || (result?.result === 'win')) return;
+      if (isBusy || (result?.result === 'win')) return;
       
-      setIsLoading(true);
+      setIsCountingDown(true);
       setError(null);
       setResult(null);
       setCountdown(3);
@@ -131,6 +130,7 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
           setCountdown(prev => {
               if (prev === null || prev <= 1) {
                   if(countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+                  setIsCountingDown(false);
                   setCountdown(null);
                   captureAndPlay();
                   return null;
@@ -143,7 +143,7 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
   const resetGame = () => {
     setResult(null);
     setError(null);
-    setIsLoading(false);
+    setIsCountingDown(false);
     if(countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
     setCountdown(null);
   }
@@ -206,21 +206,21 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
       )}
 
       <div className="h-16 flex items-center justify-center">
-        {isLoading && countdown === null ? (
+        {isPending ? (
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         ) : (
           renderResult()
         )}
       </div>
 
-      <Button onClick={startCountdownAndPlay} disabled={isLoading || (result && result.result === 'win') || !hasCameraPermission} className="w-full max-w-xs bg-accent text-accent-foreground hover:bg-accent/90">
+      <Button onClick={startCountdownAndPlay} disabled={isBusy || (result && result.result === 'win') || !hasCameraPermission} className="w-full max-w-xs bg-accent text-accent-foreground hover:bg-accent/90">
         <Hand className="mr-2" /> 
         {countdown !== null ? 'Get Ready!' : (result?.result === 'win' ? 'You Won!' : 'Play Rock, Paper, Scissors')}
       </Button>
       <p className="text-xs text-center text-muted-foreground max-w-xs">
         Win a game of rock-paper-scissors to turn off the alarm. Show your hand to the camera.
       </p>
-      {error && !isLoading && <p className="text-sm text-destructive font-medium text-center">{error}</p>}
+      {error && !isBusy && <p className="text-sm text-destructive font-medium text-center">{error}</p>}
     </div>
   );
 }
