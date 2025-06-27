@@ -29,7 +29,6 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const { toast } = useToast();
-  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const isBusy = isCountingDown || isPending;
@@ -42,7 +41,7 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        await videoRef.current.play();
         setHasCameraPermission(true);
       }
     } catch (err) {
@@ -52,13 +51,9 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
     }
   }, []);
 
-  // Cleanup interval on unmount
   useEffect(() => {
     setupCamera();
     return () => {
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-      }
       if (videoRef.current && videoRef.current.srcObject) {
         const stream = videoRef.current.srcObject as MediaStream;
         stream.getTracks().forEach((track) => track.stop());
@@ -66,7 +61,7 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
     };
   }, [setupCamera]);
 
-  const captureAndPlay = () => {
+  const captureAndPlay = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) {
         return;
     }
@@ -117,7 +112,26 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
         });
       }
     });
-  };
+  }, [onChallengeComplete, toast]);
+
+  useEffect(() => {
+    if (!isCountingDown || countdown === null) {
+      return;
+    }
+    
+    if (countdown === 0) {
+      setIsCountingDown(false);
+      setCountdown(null);
+      captureAndPlay();
+      return;
+    }
+    
+    const timer = setTimeout(() => {
+      setCountdown(countdown - 1);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, [countdown, isCountingDown, captureAndPlay]);
 
   const startCountdownAndPlay = () => {
       if (isBusy || (result?.result === 'win')) return;
@@ -126,26 +140,12 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
       setError(null);
       setResult(null);
       setCountdown(3);
-
-      countdownIntervalRef.current = setInterval(() => {
-          setCountdown(prev => {
-              if (prev === null || prev <= 1) {
-                  if(countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
-                  setIsCountingDown(false);
-                  setCountdown(null);
-                  captureAndPlay();
-                  return null;
-              }
-              return prev - 1;
-          });
-      }, 1000);
   }
 
   const resetGame = () => {
     setResult(null);
     setError(null);
     setIsCountingDown(false);
-    if(countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
     setCountdown(null);
   }
 
