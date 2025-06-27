@@ -1,20 +1,21 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { detectHandGesture, DetectHandGestureOutput } from "@/ai/flows/detect-hand-gesture";
 import { useToast } from "@/hooks/use-toast";
-import { Hand, Scissors, AlertTriangle, Loader2, CheckCircle, RefreshCw } from "lucide-react";
+import { Hand, Scissors, AlertTriangle, Loader2, CheckCircle, RefreshCw, XCircle } from "lucide-react";
 
 type RpsChallengeProps = {
   onChallengeComplete: () => void;
 };
 
-const GestureIcon = ({ gesture }: { gesture: string | undefined }) => {
+const GestureIcon = ({ gesture, className }: { gesture: string | undefined, className?: string }) => {
   switch (gesture) {
-    case "rock": return <Hand className="w-10 h-10 transform -rotate-90" />;
-    case "paper": return <Hand className="w-10 h-10" />;
-    case "scissors": return <Scissors className="w-10 h-10" />;
+    case "rock": return <Hand className={`w-10 h-10 transform -rotate-90 ${className}`} />;
+    case "paper": return <Hand className={`w-10 h-10 ${className}`} />;
+    case "scissors": return <Scissors className={`w-10 h-10 ${className}`} />;
     default: return null;
   }
 };
@@ -43,6 +44,7 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.play();
         setHasCameraPermission(true);
       }
     } catch (err) {
@@ -63,7 +65,7 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
   }, [setupCamera]);
 
   const captureAndPlay = useCallback(() => {
-    if (!videoRef.current || !canvasRef.current) {
+    if (!videoRef.current || !canvasRef.current || !videoRef.current.srcObject) {
         setError("Camera not ready.");
         setIsCountingDown(false);
         return;
@@ -160,22 +162,38 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
     setCountdown(null);
   }
 
+  const getResultInfo = () => {
+    if (!result) return { text: '', color: '', icon: null };
+    switch (result.result) {
+      case 'win':
+        return { text: 'You Win!', color: 'text-green-500', icon: <CheckCircle className="w-12 h-12" /> };
+      case 'lose':
+        return { text: 'You Lose!', color: 'text-destructive', icon: <XCircle className="w-12 h-12" /> };
+      case 'draw':
+        return { text: 'It\'s a Draw!', color: 'text-muted-foreground', icon: <p className="text-3xl font-bold">=</p> };
+      default:
+        return { text: '', color: '', icon: null };
+    }
+  }
+
   const renderResult = () => {
     if (!result) return null;
-    if (result.result === 'win') {
-      return (
-        <div className="flex flex-col items-center space-y-2 text-green-500">
-          <CheckCircle className="w-12 h-12" />
-          <p className="font-bold text-xl">You WIN!</p>
-        </div>
-      );
-    }
+    const { text, color, icon } = getResultInfo();
+
     return (
-      <Button onClick={resetGame} variant="outline">
-        <RefreshCw className="mr-2 h-4 w-4" /> Try Again
-      </Button>
-    )
-  }
+      <div className="flex flex-col items-center space-y-2">
+        <div className={`flex items-center gap-2 font-bold text-xl ${color}`}>
+          {icon}
+          <span>{text}</span>
+        </div>
+        {result.result !== 'win' && (
+          <Button onClick={resetGame} variant="outline" size="sm" className="mt-2">
+            <RefreshCw className="mr-2 h-4 w-4" /> Try Again
+          </Button>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col items-center justify-center space-y-4 p-4 border rounded-lg bg-background">
@@ -205,19 +223,19 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
         <div className="w-full flex justify-around items-center p-4 bg-muted rounded-lg">
             <div className="flex flex-col items-center space-y-1">
                 <p className="text-sm font-semibold">You</p>
-                <GestureIcon gesture={result.userGesture} />
-                <p className="text-xs uppercase">{result.userGesture}</p>
+                <GestureIcon gesture={result.userGesture} className="h-12 w-12" />
+                <p className="text-xs uppercase font-medium">{result.userGesture}</p>
             </div>
-            <p className="text-lg font-bold">vs</p>
+            <p className="text-lg font-bold text-muted-foreground">vs</p>
             <div className="flex flex-col items-center space-y-1">
                 <p className="text-sm font-semibold">App</p>
-                <GestureIcon gesture={result.appGesture} />
-                <p className="text-xs uppercase">{result.appGesture}</p>
+                <GestureIcon gesture={result.appGesture} className="h-12 w-12" />
+                <p className="text-xs uppercase font-medium">{result.appGesture}</p>
             </div>
         </div>
       )}
 
-      <div className="h-16 flex items-center justify-center">
+      <div className="h-20 flex items-center justify-center">
         {isPending ? (
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         ) : (
@@ -229,9 +247,7 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
         <Hand className="mr-2" /> 
         {countdown !== null ? 'Get Ready!' : (result?.result === 'win' ? 'You Won!' : 'Play Rock, Paper, Scissors')}
       </Button>
-      <p className="text-xs text-center text-muted-foreground max-w-xs">
-        Win a game of rock-paper-scissors to turn off the alarm. Show your hand to the camera.
-      </p>
+      
       {error && !isBusy && <p className="text-sm text-destructive font-medium text-center">{error}</p>}
     </div>
   );
