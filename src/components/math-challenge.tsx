@@ -10,17 +10,47 @@ type MathChallengeProps = {
   onChallengeComplete: () => void;
 };
 
+type Operator = '+' | '×' | '-';
+
 export function MathChallenge({ onChallengeComplete }: MathChallengeProps) {
   const [num1, setNum1] = useState(0);
   const [num2, setNum2] = useState(0);
+  const [operator, setOperator] = useState<Operator>('+');
   const [answer, setAnswer] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const correctAnswer = useMemo(() => num1 + num2, [num1, num2]);
+  const correctAnswer = useMemo(() => {
+    switch (operator) {
+      case '+':
+        return num1 + num2;
+      case '-':
+        return num1 - num2;
+      case '×':
+        return num1 * num2;
+    }
+  }, [num1, num2, operator]);
 
   const generateProblem = () => {
-    setNum1(Math.floor(Math.random() * 20) + 1);
-    setNum2(Math.floor(Math.random() * 20) + 1);
+    const operators: Operator[] = ['+', '-', '×'];
+    const selectedOperator = operators[Math.floor(Math.random() * operators.length)];
+    setOperator(selectedOperator);
+
+    let n1 = 0;
+    let n2 = 0;
+
+    if (selectedOperator === '×') {
+      n1 = Math.floor(Math.random() * 10) + 2; // 2-11
+      n2 = Math.floor(Math.random() * 10) + 2; // 2-11
+    } else if (selectedOperator === '-') {
+      n1 = Math.floor(Math.random() * 20) + 10; // 10-29
+      n2 = Math.floor(Math.random() * n1) + 1;   // 1-n1 to avoid negatives
+    } else { // addition
+      n1 = Math.floor(Math.random() * 50) + 1; // 1-50
+      n2 = Math.floor(Math.random() * 50) + 1; // 1-50
+    }
+    
+    setNum1(n1);
+    setNum2(n2);
     setAnswer("");
     setError(null);
   };
@@ -35,7 +65,7 @@ export function MathChallenge({ onChallengeComplete }: MathChallengeProps) {
       setError(null);
       onChallengeComplete();
     } else {
-      setError("Incorrect answer. Please try again.");
+      setError("Incorrect answer. A new question will appear.");
       setTimeout(() => generateProblem(), 1500);
     }
   };
@@ -46,7 +76,7 @@ export function MathChallenge({ onChallengeComplete }: MathChallengeProps) {
         <Terminal className="h-4 w-4" />
         <AlertTitle>Solve the equation!</AlertTitle>
         <AlertDescription className="text-3xl font-bold text-center py-4 font-mono">
-          {num1} + {num2} = ?
+          {num1} {operator} {num2} = ?
         </AlertDescription>
       </Alert>
       <form onSubmit={handleSubmit} className="w-full space-y-4">
