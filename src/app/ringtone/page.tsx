@@ -52,7 +52,7 @@ export default function RingtonePage() {
   }
 
   return (
-    <div className="container mx-auto">
+    <div>
       <audio ref={audioRef} />
       <div className="flex flex-col items-start gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Ringtones</h1>
@@ -106,3 +106,5 @@ export default function RingtonePage() {
     </div>
   );
 }
+
+    

@@ -28,7 +28,7 @@ export default function HomePage() {
     .sort((a, b) => a.time.localeCompare(b.time));
 
   return (
-      <div className="container mx-auto">
+      <div>
         <div className="flex flex-col items-start gap-2 mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Good morning, {userName}!</h1>
           <p className="text-muted-foreground">
@@ -124,3 +124,5 @@ export default function HomePage() {
       </div>
   );
 }
+
+    
