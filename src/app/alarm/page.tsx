@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -42,7 +42,7 @@ export default function AlarmPage() {
     if (newAlarmTime) {
       addAlarm({
         time: newAlarmTime,
-        label: newAlarmLabel,
+        label: newAlarmLabel || 'Alarm',
         challenge: newAlarmChallenge,
         enabled: true,
       });
@@ -67,15 +67,12 @@ export default function AlarmPage() {
 
   const handleChallengeComplete = () => {
     setIsChallengeActive(false);
-    if (challengingAlarmId) {
-      toggleAlarm(challengingAlarmId); // This will disable the alarm
-      toast({
-        title: "Alarm Deactivated!",
-        description: "You have successfully completed the challenge.",
-      });
-      setChallengingAlarmId(null);
-      setActiveChallenge(null);
-    }
+    toast({
+      title: "Challenge Test Complete!",
+      description: "You have successfully completed the test.",
+    });
+    setChallengingAlarmId(null);
+    setActiveChallenge(null);
   };
 
 
@@ -97,7 +94,7 @@ export default function AlarmPage() {
   };
 
   return (
-    <div>
+    <div className="flex flex-col gap-8">
       <div className="flex flex-col items-start gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Alarms</h1>
         <p className="text-muted-foreground">
@@ -105,30 +102,32 @@ export default function AlarmPage() {
         </p>
       </div>
 
-      <Card className="mt-8">
+      <Card>
         <CardHeader>
           <CardTitle>Your Alarms</CardTitle>
+          <CardDescription>View, edit, and test your alarms.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-2">
             {alarms.map((alarm, index) => {
               const ChallengeIcon = challengeConfig[alarm.challenge]?.icon;
               return (
               <div key={alarm.id}>
-                <div className="flex items-center justify-between">
+                {index > 0 && <Separator />}
+                <div className="flex items-center justify-between py-4">
                   <div className="flex items-center gap-4">
-                    <span className={`text-2xl font-bold font-mono ${!alarm.enabled && 'text-muted-foreground'}`}>
+                    <span className={`text-2xl font-bold font-mono ${!alarm.enabled && 'text-muted-foreground/50 line-through'}`}>
                       {alarm.time}
                     </span>
                     <div>
-                      <p className={`font-medium ${!alarm.enabled && 'text-muted-foreground'}`}>{alarm.label}</p>
+                      <p className={`font-medium ${!alarm.enabled && 'text-muted-foreground/80'}`}>{alarm.label}</p>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           {ChallengeIcon && <ChallengeIcon className="h-4 w-4" />}
                           <span>{challengeConfig[alarm.challenge]?.label || 'No Challenge'}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <Switch
                       id={`alarm-switch-${alarm.id}`}
                       checked={alarm.enabled}
@@ -143,27 +142,33 @@ export default function AlarmPage() {
                       <Pencil className="h-4 w-4" />
                       <span className="sr-only">Edit Alarm</span>
                     </Button>
-                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => deleteAlarm(alarm.id)}>
+                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/90" onClick={() => deleteAlarm(alarm.id)}>
                       <Trash2 className="h-4 w-4" />
                        <span className="sr-only">Delete Alarm</span>
                     </Button>
                   </div>
                 </div>
-                {index < alarms.length - 1 && <Separator className="mt-4" />}
               </div>
             )})}
              {alarms.length === 0 && (
-              <p className="text-center text-muted-foreground py-8">
-                You have no alarms set.
-              </p>
+              <div className="text-center text-muted-foreground py-12">
+                <p>You have no alarms set.</p>
+                <p className="text-sm">Add one below to get started.</p>
+              </div>
             )}
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col items-start gap-4 border-t pt-6">
-            <h3 className="font-semibold">Add New Alarm</h3>
-            <div className="grid w-full grid-cols-1 md:grid-cols-4 items-end gap-4">
-              <div className="space-y-1">
-                <Label htmlFor="new-alarm-time">Alarm time</Label>
+      </Card>
+
+      <Card>
+        <CardHeader>
+            <CardTitle>Add New Alarm</CardTitle>
+            <CardDescription>Create a new alarm with a specific time, label, and challenge.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <div className="grid w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-end gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-alarm-time">Time</Label>
                 <Input 
                   id="new-alarm-time"
                   type="time" 
@@ -171,7 +176,7 @@ export default function AlarmPage() {
                   onChange={(e) => setNewAlarmTime(e.target.value)} 
                 />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <Label htmlFor="new-alarm-label">Label</Label>
                 <Input
                   id="new-alarm-label"
@@ -180,7 +185,7 @@ export default function AlarmPage() {
                   placeholder="e.g. Weekday Wake-up"
                 />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <Label htmlFor="new-alarm-challenge">Challenge</Label>
                 <Select
                   value={newAlarmChallenge}
@@ -208,7 +213,7 @@ export default function AlarmPage() {
                 <PlusCircle className="mr-2 h-4 w-4"/> Add Alarm
               </Button>
             </div>
-        </CardFooter>
+        </CardContent>
       </Card>
       
       <ChallengeDialog
@@ -279,6 +284,7 @@ export default function AlarmPage() {
               </div>
             </div>
             <DialogFooter>
+              <Button type="button" variant="secondary" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
               <Button type="button" onClick={handleSaveChanges}>Save changes</Button>
             </DialogFooter>
           </DialogContent>

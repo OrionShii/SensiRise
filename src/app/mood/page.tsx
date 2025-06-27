@@ -25,6 +25,7 @@ export default function MoodPage() {
         title: "Mood Logged!",
         description: `Your BPM of ${bpmValue} has been recorded.`,
       });
+      setBpmInput("");
     } else {
       toast({
         title: "Invalid Input",
@@ -35,51 +36,59 @@ export default function MoodPage() {
   };
 
   return (
-    <div>
+    <div className="flex flex-col gap-8">
       <div className="flex flex-col items-start gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Log Your Mood</h1>
         <p className="text-muted-foreground">
-          Enter your current heart rate (BPM) to classify your mood.
+          Manually enter your heart rate (BPM) to get a mood snapshot.
         </p>
       </div>
-      <Card className="mt-8">
+      <Card>
         <CardHeader>
-          <CardTitle>Current Mood</CardTitle>
+          <CardTitle>Log Heart Rate</CardTitle>
           <CardDescription>
             {mood
-              ? `Based on your BPM, you seem to be feeling: ${mood.label}`
-              : "Enter your BPM to see your current mood."}
+              ? `Your last recorded mood was: ${mood.label}`
+              : "Enter your BPM to classify your current mood."}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="bpm">Enter BPM (Heart Rate)</Label>
-              <Input
-                id="bpm"
-                type="number"
-                value={bpmInput}
-                onChange={(e) => setBpmInput(e.target.value)}
-                placeholder="e.g., 75"
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full">
+        <form onSubmit={handleSubmit}>
+          <CardContent>
+              <div className="space-y-2">
+                <Label htmlFor="bpm">Current BPM (beats per minute)</Label>
+                <Input
+                  id="bpm"
+                  type="number"
+                  value={bpmInput}
+                  onChange={(e) => setBpmInput(e.target.value)}
+                  placeholder="e.g., 75"
+                  required
+                />
+              </div>
+          </CardContent>
+          <CardFooter className="border-t pt-6">
+            <Button type="submit" className="w-full md:w-auto">
               Log Mood
             </Button>
-          </form>
-        </CardContent>
-        {mood && (
-           <CardFooter className="flex-col items-center justify-center pt-6 border-t">
-              <span className="text-6xl">{mood.emoji}</span>
-              <p className="mt-2 text-2xl font-semibold">{mood.label}</p>
           </CardFooter>
-        )}
+        </form>
       </Card>
       
-      <Alert className="mt-8">
+      {mood && (
+        <Card>
+           <CardHeader>
+              <CardTitle>Current Mood Analysis</CardTitle>
+           </CardHeader>
+           <CardContent className="flex flex-col items-center justify-center pt-6 text-center">
+              <span className="text-7xl">{mood.emoji}</span>
+              <p className="mt-4 text-3xl font-bold">{mood.label}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      <Alert>
         <Zap className="h-4 w-4" />
-        <AlertTitle>Coming Soon: Smartwatch Sync! ✨</AlertTitle>
+        <AlertTitle>Coming Soon: Smartwatch Sync!</AlertTitle>
         <AlertDescription>
           Seamless smartwatch integration for automatic mood detection based on your heart rate. No more manual input — just connect and feel the sync.
         </AlertDescription>

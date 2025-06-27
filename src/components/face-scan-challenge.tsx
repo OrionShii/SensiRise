@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -5,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { detectFace } from "@/ai/flows/detect-face-flow";
 import { Camera, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 type FaceScanChallengeProps = {
   onChallengeComplete: () => void;
@@ -51,8 +53,8 @@ export function FaceScanChallenge({ onChallengeComplete }: FaceScanChallengeProp
   }, [setupCamera]);
 
   const handleScan = async () => {
-    if (!videoRef.current || !canvasRef.current || !hasCameraPermission) {
-      setError("Camera not ready.");
+    if (!videoRef.current || !canvasRef.current || !hasCameraPermission || videoRef.current.readyState < 2) {
+      setError("Camera is not ready. Please wait a moment and try again.");
       return;
     }
     
@@ -106,19 +108,22 @@ export function FaceScanChallenge({ onChallengeComplete }: FaceScanChallengeProp
   return (
     <div className="flex flex-col items-center justify-center space-y-4 p-4 border rounded-lg bg-background">
       <canvas ref={canvasRef} className="hidden" />
-      <div className="relative w-full aspect-square max-w-xs rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+      <div className="relative w-full aspect-video max-w-sm rounded-lg overflow-hidden bg-muted flex items-center justify-center">
         {isComplete ? (
           <div className="flex flex-col items-center text-green-500">
             <CheckCircle className="w-24 h-24" />
-            <p className="mt-4 text-lg font-semibold">You're Awake!</p>
+            <p className="mt-4 text-lg font-semibold">Challenge Complete!</p>
           </div>
         ) : (
           <>
             {hasCameraPermission === false && (
-              <div className="text-center p-4 text-destructive">
-                <AlertTriangle className="w-12 h-12 mx-auto" />
-                <p className="mt-2 font-semibold">Camera permission denied</p>
-              </div>
+              <Alert variant="destructive" className="m-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Camera Access Denied</AlertTitle>
+                <AlertDescription>
+                  Please enable camera permissions to continue.
+                </AlertDescription>
+              </Alert>
             )}
             {hasCameraPermission === null && (
               <div className="text-center p-4 text-muted-foreground">
@@ -128,27 +133,27 @@ export function FaceScanChallenge({ onChallengeComplete }: FaceScanChallengeProp
             )}
             <video ref={videoRef} className={`w-full h-full object-cover transform -scale-x-100 ${hasCameraPermission ? '' : 'hidden'}`} playsInline muted autoPlay />
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
-            <Camera className="absolute top-4 left-4 text-white/80 w-6 h-6" />
           </>
         )}
       </div>
       
+      <p className="text-sm text-center text-muted-foreground max-w-sm">
+        Look directly into the camera with your eyes open to prove you're awake.
+      </p>
+
       <Button
         onClick={handleScan}
         disabled={isLoading || isComplete || !hasCameraPermission}
-        className="w-full max-w-xs bg-accent text-accent-foreground hover:bg-accent/90"
+        className="w-full max-w-sm"
       >
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {isLoading ? "Analyzing..." : isComplete ? "Done!" : "I'm Awake"}
+        {isLoading ? "Analyzing..." : isComplete ? "Success!" : "Scan My Face"}
       </Button>
       
       {error && !isLoading && (
         <p className="text-sm text-destructive font-medium text-center">{error}</p>
       )}
 
-      <p className="text-xs text-center text-muted-foreground max-w-xs">
-        Look into the camera with your eyes open to prove you're awake.
-      </p>
     </div>
   );
 }

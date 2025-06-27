@@ -2,10 +2,10 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Play, CheckCircle2 } from "lucide-react";
+import { Play, CheckCircle2, Pause } from "lucide-react";
 
 type Ringtone = {
   id: string;
@@ -23,62 +23,71 @@ const mockRingtones: Ringtone[] = [
 
 export default function RingtonePage() {
   const [activeRingtoneId, setActiveRingtoneId] = useState<string>('1');
+  const [playingUrl, setPlayingUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const handlePlay = (url: string) => {
+  const handlePlayToggle = (ringtone: Ringtone) => {
     const audio = audioRef.current;
     if (!audio) return;
     
-    // If the clicked ringtone is already playing, pause it.
-    if (audio.src === url && !audio.paused) {
+    // If clicking the currently playing ringtone, pause it
+    if (playingUrl === ringtone.url) {
       audio.pause();
+      setPlayingUrl(null);
     } else {
-      // Otherwise, play the new ringtone.
-      // Crucially, pause any existing audio first to prevent interruption errors.
+      // Pause any current audio before playing a new one
       if (!audio.paused) {
         audio.pause();
       }
-      audio.src = url;
+      audio.src = ringtone.url;
       audio.play().catch(e => console.error("Audio playback failed:", e));
+      setPlayingUrl(ringtone.url);
     }
+  };
+  
+  // Listen for when audio finishes playing to reset the state
+  const onAudioEnded = () => {
+    setPlayingUrl(null);
   };
 
   const handleSetActive = (id: string) => {
     setActiveRingtoneId(id);
-    if (audioRef.current) {
+    if (audioRef.current && !audioRef.current.paused) {
       audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+      setPlayingUrl(null);
     }
-  }
+  };
 
   return (
-    <div>
-      <audio ref={audioRef} />
+    <div className="flex flex-col gap-8">
+      <audio ref={audioRef} onEnded={onAudioEnded} />
       <div className="flex flex-col items-start gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Ringtones</h1>
         <p className="text-muted-foreground">
-          Choose your alarm sound.
+          Choose the sound that wakes you up. The active ringtone will be used for all alarms.
         </p>
       </div>
 
-      <Card className="mt-8">
+      <Card>
         <CardHeader>
           <CardTitle>Select a Ringtone</CardTitle>
+          <CardDescription>Preview sounds and set your preferred alarm tone.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
             {mockRingtones.map((ringtone, index) => (
               <div key={ringtone.id}>
+                {index > 0 && <Separator />}
                 <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
                   <span className="font-medium">{ringtone.name}</span>
                   <div className="flex items-center gap-2">
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handlePlay(ringtone.url)}
+                      onClick={() => handlePlayToggle(ringtone)}
                       aria-label={`Play ${ringtone.name}`}
                     >
-                      <Play className="h-5 w-5" />
+                      {playingUrl === ringtone.url ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
                     </Button>
                     <Button
                       onClick={() => handleSetActive(ringtone.id)}
@@ -92,12 +101,11 @@ export default function RingtonePage() {
                           Active
                         </>
                       ) : (
-                        'Set as Active'
+                        'Set Active'
                       )}
                     </Button>
                   </div>
                 </div>
-                {index < mockRingtones.length - 1 && <Separator />}
               </div>
             ))}
           </div>
@@ -106,5 +114,3 @@ export default function RingtonePage() {
     </div>
   );
 }
-
-    

@@ -17,16 +17,28 @@ export function AlarmTriggerDialog() {
   useEffect(() => {
     const audio = audioRef.current;
     if (ringingAlarm && audio) {
+      // Make sure we pause before changing src to avoid race conditions
+      if (!audio.paused) {
+        audio.pause();
+      }
       audio.src = 'https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg';
       audio.loop = true;
-      audio.play().catch(e => console.error("Audio playback failed:", e));
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            console.error("Audio playback failed:", error);
+            // Autoplay was prevented.
+        });
+      }
     } else if (audio && !audio.paused) {
       audio.pause();
     }
 
+    // Cleanup function to pause audio when the component unmounts or ringingAlarm changes
     return () => {
       if (audio && !audio.paused) {
         audio.pause();
+        audio.currentTime = 0; // Reset audio
       }
     };
   }, [ringingAlarm, audioRef]);
@@ -68,11 +80,13 @@ export function AlarmTriggerDialog() {
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
-        <DialogHeader className="text-center">
-          <AlarmClock className="mx-auto h-12 w-12 text-primary" />
+        <DialogHeader className="text-center items-center">
+          <div className="p-3 rounded-full bg-primary/10 mb-4">
+            <AlarmClock className="h-8 w-8 text-primary" />
+          </div>
           <DialogTitle className="text-3xl font-bold">Wake Up!</DialogTitle>
           <DialogDescription className="text-lg">
-            It's time for your {ringingAlarm.time} alarm: "{ringingAlarm.label}"
+            It's {ringingAlarm.time}. Time for "{ringingAlarm.label}"
           </DialogDescription>
         </DialogHeader>
         <div className="pt-4">

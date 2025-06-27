@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { PlusCircle, Bell, Gamepad2, BrainCircuit, ScanFace, ScanSearch, Smile } from "lucide-react";
+import { PlusCircle, Bell, Gamepad2, BrainCircuit, ScanFace, ScanSearch, Smile, Wind } from "lucide-react";
 import { useAlarm, type ChallengeType } from "@/context/alarm-context";
 import { useMood } from "@/context/mood-context";
 
@@ -28,15 +28,15 @@ export default function HomePage() {
     .sort((a, b) => a.time.localeCompare(b.time));
 
   return (
-      <div>
-        <div className="flex flex-col items-start gap-2 mb-8">
+      <div className="flex flex-col gap-8">
+        <div className="flex flex-col items-start gap-2">
           <h1 className="text-3xl font-bold tracking-tight">Good morning, {userName}!</h1>
           <p className="text-muted-foreground">
-            Here's your summary for today.
+            Here's a summary of your day. Ready to get started?
           </p>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
           <Card className="flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div className="space-y-1">
@@ -47,12 +47,13 @@ export default function HomePage() {
             </CardHeader>
             <CardContent className="flex-grow">
               {upcomingAlarms.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-2">
                   {upcomingAlarms.map((alarm, index) => {
                     const ChallengeIcon = challengeConfig[alarm.challenge]?.icon;
                     return (
                       <div key={alarm.id}>
-                        <div className="flex items-center justify-between pt-4">
+                         {index > 0 && <Separator />}
+                        <div className="flex items-center justify-between py-4">
                             <div className="flex items-center gap-4">
                                 <span className="text-xl font-bold font-mono text-primary">
                                 {alarm.time}
@@ -66,20 +67,19 @@ export default function HomePage() {
                                 {ChallengeIcon && <ChallengeIcon className="h-5 w-5" />}
                             </div>
                         </div>
-                        {index < upcomingAlarms.length - 1 && <Separator className="mt-4" />}
                       </div>
                     );
                   })}
                 </div>
               ) : (
-                <div className="flex h-full flex-col items-center justify-center text-center py-10 rounded-lg bg-muted/50 my-4">
+                <div className="flex h-full min-h-[200px] flex-col items-center justify-center text-center p-6 rounded-lg bg-muted/50">
                   <Bell className="w-12 h-12 text-muted-foreground/50" />
                   <p className="mt-4 font-medium text-muted-foreground">No alarms scheduled</p>
-                  <p className="text-xs text-muted-foreground">Enjoy your sleep!</p>
+                  <p className="text-sm text-muted-foreground/80">Enjoy your rest!</p>
                 </div>
               )}
             </CardContent>
-             <CardFooter>
+             <CardFooter className="border-t pt-6">
                <Button asChild className="w-full">
                   <Link href="/alarm">
                       <PlusCircle className="mr-2 h-4 w-4"/> Add New Alarm
@@ -92,30 +92,30 @@ export default function HomePage() {
             <CardHeader className="flex flex-row items-center justify-between pb-2">
                <div className="space-y-1">
                   <CardTitle>Today's Mood</CardTitle>
-                  <CardDescription>How you're feeling today.</CardDescription>
+                  <CardDescription>A snapshot of how you're feeling.</CardDescription>
               </div>
                <Smile className="h-5 w-5 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="flex-grow">
+            <CardContent className="flex-grow flex items-center justify-center">
               {mood ? (
-                <div className="flex h-full flex-col items-center justify-center text-center py-10 rounded-lg bg-muted/50 my-4">
+                <div className="flex h-full min-h-[200px] w-full flex-col items-center justify-center text-center p-6 rounded-lg bg-muted/50">
                   <span className="text-6xl">{mood.emoji}</span>
                   <p className="mt-4 text-xl font-semibold">{mood.label}</p>
                 </div>
               ) : (
-                  <div className="flex h-full flex-col items-center justify-center text-center py-10 rounded-lg bg-muted/50 my-4">
+                  <div className="flex h-full min-h-[200px] flex-col items-center justify-center text-center p-6 rounded-lg bg-muted/50">
                     <Smile className="w-12 h-12 text-muted-foreground/50" />
-                    <p className="mt-4 font-medium text-muted-foreground">No mood data yet.</p>
-                      <Button asChild variant="link" className="mt-2">
-                        <Link href="/mood">Log your mood</Link>
+                    <p className="mt-4 font-medium text-muted-foreground">No mood data recorded</p>
+                      <Button asChild variant="link" className="mt-1">
+                        <Link href="/mood">Log your mood to see it here</Link>
                       </Button>
                 </div>
               )}
             </CardContent>
-             <CardFooter>
-               <Button asChild className="w-full" variant="outline">
+             <CardFooter className="border-t pt-6">
+               <Button asChild className="w-full" variant="secondary">
                   <Link href="/mood">
-                      View Mood History
+                      View Mood Details
                   </Link>
                </Button>
              </CardFooter>

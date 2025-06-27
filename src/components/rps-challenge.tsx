@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { detectHandGesture, DetectHandGestureOutput } from "@/ai/flows/detect-hand-gesture";
 import { useToast } from "@/hooks/use-toast";
 import { Hand, Scissors, AlertTriangle, Loader2, CheckCircle, RefreshCw, XCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type RpsChallengeProps = {
   onChallengeComplete: () => void;
@@ -13,9 +14,9 @@ type RpsChallengeProps = {
 
 const GestureIcon = ({ gesture, className }: { gesture: string | undefined, className?: string }) => {
   switch (gesture) {
-    case "rock": return <Hand className={`w-10 h-10 transform -rotate-90 ${className}`} />;
-    case "paper": return <Hand className={`w-10 h-10 ${className}`} />;
-    case "scissors": return <Scissors className={`w-10 h-10 ${className}`} />;
+    case "rock": return <Hand className={`transform -rotate-90 ${className}`} />;
+    case "paper": return <Hand className={`${className}`} />;
+    case "scissors": return <Scissors className={`${className}`} />;
     default: return null;
   }
 };
@@ -33,6 +34,7 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
   const [isPending, startTransition] = useTransition();
 
   const isBusy = isCountingDown || isPending;
+  const isGameWon = result?.result === 'win';
 
   const setupCamera = useCallback(async () => {
     if (typeof window === 'undefined' || !navigator.mediaDevices) {
@@ -65,9 +67,10 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
   }, [setupCamera]);
 
   const captureAndPlay = useCallback(() => {
-    if (!videoRef.current || !canvasRef.current || !videoRef.current.srcObject) {
+    if (!videoRef.current || !canvasRef.current || videoRef.current.readyState < 2) {
         setError("Camera not ready.");
         setIsCountingDown(false);
+        setCountdown(null);
         return;
     }
     
@@ -75,18 +78,13 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
 
     const canvas = canvasRef.current;
     const video = videoRef.current;
-    if (video.readyState < video.HAVE_ENOUGH_DATA) {
-      setError("Camera is still loading. Please try again.");
-      setIsCountingDown(false);
-      return;
-    }
-
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const context = canvas.getContext("2d");
     if (!context) {
         setError("Could not get canvas context.");
         setIsCountingDown(false);
+        setCountdown(null);
         return;
     }
     
@@ -102,7 +100,7 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
             title: "You Win!",
             description: "You've successfully beaten the challenge.",
           });
-          setTimeout(onChallengeComplete, 1500);
+          setTimeout(onChallengeComplete, 2000);
         } else if (aiResult.result === 'lose') {
            toast({
             title: "You Lose!",
@@ -133,9 +131,11 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
     }
     
     if (countdown === 0) {
-      setIsCountingDown(false);
       setCountdown(null);
-      captureAndPlay();
+      setTimeout(() => {
+        captureAndPlay();
+        setIsCountingDown(false);
+      }, 500); // Small delay for the user to see "Shoot!"
       return;
     }
     
@@ -147,7 +147,7 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
   }, [countdown, isCountingDown, captureAndPlay]);
 
   const startCountdownAndPlay = () => {
-      if (isBusy || (result?.result === 'win')) return;
+      if (isBusy || isGameWon) return;
       
       setIsCountingDown(true);
       setError(null);
@@ -155,22 +155,15 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
       setCountdown(3);
   }
 
-  const resetGame = () => {
-    setResult(null);
-    setError(null);
-    setIsCountingDown(false);
-    setCountdown(null);
-  }
-
   const getResultInfo = () => {
     if (!result) return { text: '', color: '', icon: null };
     switch (result.result) {
       case 'win':
-        return { text: 'You Win!', color: 'text-green-500', icon: <CheckCircle className="w-12 h-12" /> };
+        return { text: 'You Win!', color: 'text-green-500', icon: <CheckCircle className="w-8 h-8" /> };
       case 'lose':
-        return { text: 'You Lose!', color: 'text-destructive', icon: <XCircle className="w-12 h-12" /> };
+        return { text: 'You Lose!', color: 'text-destructive', icon: <XCircle className="w-8 h-8" /> };
       case 'draw':
-        return { text: 'It\'s a Draw!', color: 'text-muted-foreground', icon: <p className="text-3xl font-bold">=</p> };
+        return { text: 'It\'s a Draw!', color: 'text-muted-foreground', icon: <p className="text-2xl font-bold">=</p> };
       default:
         return { text: '', color: '', icon: null };
     }
@@ -181,13 +174,13 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
     const { text, color, icon } = getResultInfo();
 
     return (
-      <div className="flex flex-col items-center space-y-2">
+      <div className="flex flex-col items-center space-y-4">
         <div className={`flex items-center gap-2 font-bold text-xl ${color}`}>
           {icon}
           <span>{text}</span>
         </div>
-        {result.result !== 'win' && (
-          <Button onClick={resetGame} variant="outline" size="sm" className="mt-2">
+        {!isGameWon && (
+          <Button onClick={startCountdownAndPlay} variant="outline" size="sm" className="mt-2">
             <RefreshCw className="mr-2 h-4 w-4" /> Try Again
           </Button>
         )}
@@ -198,12 +191,15 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
   return (
     <div className="flex flex-col items-center justify-center space-y-4 p-4 border rounded-lg bg-background">
       <canvas ref={canvasRef} className="hidden" />
-      <div className="relative w-full aspect-square max-w-xs rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+      <div className="relative w-full aspect-video max-w-sm rounded-lg overflow-hidden bg-muted flex items-center justify-center">
         {hasCameraPermission === false && (
-          <div className="text-center p-4 text-destructive">
-            <AlertTriangle className="w-12 h-12 mx-auto" />
-            <p className="mt-2 font-semibold">Camera permission denied</p>
-          </div>
+            <Alert variant="destructive" className="m-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Camera Access Denied</AlertTitle>
+              <AlertDescription>
+                Please enable camera permissions to continue.
+              </AlertDescription>
+            </Alert>
         )}
         {hasCameraPermission === null && (
           <div className="text-center p-4 text-muted-foreground">
@@ -214,7 +210,7 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
         <video ref={videoRef} className={`w-full h-full object-cover transform -scale-x-100 ${hasCameraPermission ? '' : 'hidden'}`} playsInline muted autoPlay />
         {countdown !== null && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50 pointer-events-none">
-            <p className="text-8xl font-bold text-white drop-shadow-lg">{countdown}</p>
+            <p className="text-8xl font-bold text-white drop-shadow-lg animate-ping-once">{countdown > 0 ? countdown : 'Go!'}</p>
           </div>
         )}
       </div>
@@ -223,30 +219,33 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
         <div className="w-full flex justify-around items-center p-4 bg-muted rounded-lg">
             <div className="flex flex-col items-center space-y-1">
                 <p className="text-sm font-semibold">You</p>
-                <GestureIcon gesture={result.userGesture} className="h-12 w-12" />
+                <GestureIcon gesture={result.userGesture} className="h-10 w-10" />
                 <p className="text-xs uppercase font-medium">{result.userGesture}</p>
             </div>
-            <p className="text-lg font-bold text-muted-foreground">vs</p>
+            <p className="text-2xl font-bold text-muted-foreground">vs</p>
             <div className="flex flex-col items-center space-y-1">
                 <p className="text-sm font-semibold">App</p>
-                <GestureIcon gesture={result.appGesture} className="h-12 w-12" />
+                <GestureIcon gesture={result.appGesture} className="h-10 w-10" />
                 <p className="text-xs uppercase font-medium">{result.appGesture}</p>
             </div>
         </div>
       )}
 
-      <div className="h-20 flex items-center justify-center">
+      <div className="h-20 w-full flex items-center justify-center">
         {isPending ? (
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="flex flex-col items-center gap-2 text-primary">
+            <Loader2 className="w-8 h-8 animate-spin" />
+            <p className="text-sm font-semibold">Analyzing...</p>
+          </div>
         ) : (
-          renderResult()
+          result ? renderResult() : (
+            <Button onClick={startCountdownAndPlay} disabled={!hasCameraPermission} className="w-full max-w-sm">
+              <Hand className="mr-2" /> 
+              Play Game
+            </Button>
+          )
         )}
       </div>
-
-      <Button onClick={startCountdownAndPlay} disabled={isBusy || (result && result.result === 'win') || !hasCameraPermission} className="w-full max-w-xs bg-accent text-accent-foreground hover:bg-accent/90">
-        <Hand className="mr-2" /> 
-        {countdown !== null ? 'Get Ready!' : (result?.result === 'win' ? 'You Won!' : 'Play Rock, Paper, Scissors')}
-      </Button>
       
       {error && !isBusy && <p className="text-sm text-destructive font-medium text-center">{error}</p>}
     </div>

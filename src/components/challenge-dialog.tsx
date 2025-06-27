@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -66,6 +67,14 @@ export function ChallengeDialog({
     }
   };
 
+  const handleDialogClose = (newOpenState: boolean) => {
+    // Prevent closing the dialog by clicking outside or pressing Escape
+    if (!newOpenState && open) {
+      return;
+    }
+    onOpenChange(newOpenState);
+  };
+
   if (!open || challenges.length === 0 || !challenges[stepIndex]) {
     return null;
   }
@@ -73,8 +82,8 @@ export function ChallengeDialog({
   const currentStep = challenges[stepIndex];
   const currentChallengeInfo = challengeConfig[currentStep];
   const title = challenges.length > 1
-      ? `Step ${stepIndex + 1} of ${challenges.length}: ${currentChallengeInfo.label}`
-      : currentChallengeInfo.label;
+      ? `Step ${stepIndex + 1}/${challenges.length}: ${currentChallengeInfo.label}`
+      : `Challenge: ${currentChallengeInfo.label}`;
 
   const description = currentChallengeInfo.description;
   const progressValue = ((stepIndex + 1) / challenges.length) * 100;
@@ -95,18 +104,20 @@ export function ChallengeDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-headline">{title}</DialogTitle>
+          <DialogTitle className="text-2xl font-bold">{title}</DialogTitle>
           <DialogDescription>
             {description}
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4">
-          <Progress value={progressValue} className="w-full" />
-        </div>
-        <div>{renderChallenge()}</div>
+        {challenges.length > 1 && (
+          <div className="py-4">
+            <Progress value={progressValue} className="w-full" />
+          </div>
+        )}
+        <div className="mt-2">{renderChallenge()}</div>
       </DialogContent>
     </Dialog>
   );
