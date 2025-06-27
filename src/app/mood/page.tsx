@@ -1,62 +1,78 @@
+
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-
-type Mood = {
-  emoji: string;
-  label: string;
-};
-
-const moods: Mood[] = [
-  { emoji: "😄", label: "Happy" },
-  { emoji: "😊", label: "Content" },
-  { emoji: "😐", label: "Neutral" },
-  { emoji: "😔", label: "Sad" },
-  { emoji: "😠", label: "Angry" },
-];
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { useMood } from "@/context/mood-context";
+import { useToast } from "@/hooks/use-toast";
 
 export default function MoodPage() {
-  const [selectedMood, setSelectedMood] = useState<Mood | null>(moods[1]);
+  const { mood, updateBpm } = useMood();
+  const [bpmInput, setBpmInput] = useState("");
+  const { toast } = useToast();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const bpmValue = parseInt(bpmInput, 10);
+    if (!isNaN(bpmValue) && bpmValue > 0) {
+      updateBpm(bpmValue);
+      toast({
+        title: "Mood Logged!",
+        description: `Your BPM of ${bpmValue} has been recorded.`,
+      });
+    } else {
+      toast({
+        title: "Invalid Input",
+        description: "Please enter a valid number for BPM.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="container mx-auto">
       <div className="flex flex-col items-start gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Mood</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Log Your Mood</h1>
         <p className="text-muted-foreground">
-          How are you feeling today?
+          Enter your current heart rate (BPM) to classify your mood.
         </p>
       </div>
       <Card className="mt-8">
         <CardHeader>
-          <CardTitle>Log Your Mood</CardTitle>
+          <CardTitle>Current Mood</CardTitle>
           <CardDescription>
-            {selectedMood
-              ? `Today you're feeling: ${selectedMood.label}`
-              : "Select your current mood below."}
+            {mood
+              ? `Based on your BPM, you seem to be feeling: ${mood.label}`
+              : "Enter your BPM to see your current mood."}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-center items-center gap-4 sm:gap-8 py-8">
-            {moods.map((mood) => (
-              <button
-                key={mood.label}
-                onClick={() => setSelectedMood(mood)}
-                className={`flex flex-col items-center gap-2 p-4 rounded-full transition-all duration-200 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
-                  selectedMood?.label === mood.label
-                    ? "bg-primary/20 scale-110"
-                    : "bg-muted/50"
-                }`}
-                aria-label={`Select ${mood.label} mood`}
-              >
-                <span className="text-4xl sm:text-5xl">{mood.emoji}</span>
-                <span className="text-xs font-medium text-muted-foreground">
-                  {mood.label}
-                </span>
-              </button>
-            ))}
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="bpm">Enter BPM (Heart Rate)</Label>
+              <Input
+                id="bpm"
+                type="number"
+                value={bpmInput}
+                onChange={(e) => setBpmInput(e.target.value)}
+                placeholder="e.g., 75"
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full">
+              Log Mood
+            </Button>
+          </form>
         </CardContent>
+        {mood && (
+           <CardFooter className="flex-col items-center justify-center pt-6 border-t">
+              <span className="text-6xl">{mood.emoji}</span>
+              <p className="mt-2 text-2xl font-semibold">{mood.label}</p>
+          </CardFooter>
+        )}
       </Card>
     </div>
   );

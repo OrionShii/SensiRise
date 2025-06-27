@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { PlusCircle, Bell, Gamepad2, BrainCircuit, ScanFace, ScanSearch, Smile } from "lucide-react";
 import { useAlarm, type ChallengeType } from "@/context/alarm-context";
+import { useMood } from "@/context/mood-context";
 
 const challengeConfig: Record<ChallengeType, { label: string; icon?: React.ElementType }> = {
   none: { label: "No Challenge" },
@@ -19,8 +20,8 @@ const challengeConfig: Record<ChallengeType, { label: string; icon?: React.Eleme
 
 export default function HomePage() {
   const { alarms } = useAlarm();
+  const { mood } = useMood();
   const userName = "Alex";
-  const mood = { emoji: "😊", label: "Content" };
 
   const upcomingAlarms = alarms
     .filter((alarm) => alarm.enabled)
@@ -104,7 +105,7 @@ export default function HomePage() {
               ) : (
                   <div className="flex h-full flex-col items-center justify-center text-center py-10 rounded-lg bg-muted/50 my-4">
                     <Smile className="w-12 h-12 text-muted-foreground/50" />
-                    <p className="mt-4 text-muted-foreground">No mood logged yet.</p>
+                    <p className="mt-4 font-medium text-muted-foreground">No mood data yet.</p>
                       <Button asChild variant="link" className="mt-2">
                         <Link href="/mood">Log your mood</Link>
                       </Button>
