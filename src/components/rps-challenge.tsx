@@ -35,13 +35,14 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
 
   const setupCamera = useCallback(async () => {
     if (typeof window === 'undefined' || !navigator.mediaDevices) {
+        setError("Camera not supported on this device.");
+        setHasCameraPermission(false);
         return;
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
         setHasCameraPermission(true);
       }
     } catch (err) {
@@ -72,7 +73,7 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
 
     const canvas = canvasRef.current;
     const video = videoRef.current;
-    if (video.videoWidth === 0 || video.videoHeight === 0) {
+    if (video.readyState < video.HAVE_ENOUGH_DATA) {
       setError("Camera is still loading. Please try again.");
       setIsCountingDown(false);
       return;
