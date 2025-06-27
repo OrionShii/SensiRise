@@ -7,23 +7,36 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Pencil, Trash2, PlusCircle } from "lucide-react";
+import { Pencil, Trash2, PlusCircle, Gamepad2, BrainCircuit, ScanFace } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+type ChallengeType = 'none' | 'rps' | 'math' | 'face';
+
+const challengeConfig: Record<ChallengeType, { label: string; icon?: React.ElementType }> = {
+  none: { label: "No Challenge" },
+  rps: { label: "Rock, Paper, Scissors", icon: Gamepad2 },
+  math: { label: "Math Question", icon: BrainCircuit },
+  face: { label: "Awake Check", icon: ScanFace },
+};
 
 type Alarm = {
   id: string;
   time: string;
   enabled: boolean;
   label: string;
+  challenge: ChallengeType;
 };
 
 const mockAlarms: Alarm[] = [
-  { id: '1', time: '07:00', enabled: true, label: 'Weekday Wake-up' },
-  { id: '2', time: '09:00', enabled: false, label: 'Weekend Morning' },
+  { id: '1', time: '07:00', enabled: true, label: 'Weekday Wake-up', challenge: 'rps' },
+  { id: '2', time: '09:00', enabled: false, label: 'Weekend Morning', challenge: 'math' },
+  { id: '3', time: '06:30', enabled: true, label: 'Early Bird', challenge: 'face' },
 ];
 
 export default function AlarmPage() {
   const [alarms, setAlarms] = useState<Alarm[]>(mockAlarms);
   const [newAlarmTime, setNewAlarmTime] = useState('08:00');
+  const [newAlarmChallenge, setNewAlarmChallenge] = useState<ChallengeType>('rps');
 
   const handleToggleAlarm = (id: string) => {
     setAlarms(
@@ -43,7 +56,8 @@ export default function AlarmPage() {
         id: Date.now().toString(),
         time: newAlarmTime,
         enabled: true,
-        label: 'New Alarm'
+        label: 'New Alarm',
+        challenge: newAlarmChallenge,
       };
       setAlarms([...alarms, newAlarm]);
     }
@@ -54,7 +68,7 @@ export default function AlarmPage() {
       <div className="flex flex-col items-start gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Alarms</h1>
         <p className="text-muted-foreground">
-          Manage your alarms here. The challenges will trigger when an active alarm goes off.
+          Manage your alarms and their deactivation challenges.
         </p>
       </div>
 
@@ -64,7 +78,9 @@ export default function AlarmPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {alarms.map((alarm, index) => (
+            {alarms.map((alarm, index) => {
+              const ChallengeIcon = challengeConfig[alarm.challenge]?.icon;
+              return (
               <div key={alarm.id}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -73,7 +89,10 @@ export default function AlarmPage() {
                     </span>
                     <div>
                       <p className={`font-medium ${!alarm.enabled && 'text-muted-foreground'}`}>{alarm.label}</p>
-                      <p className="text-sm text-muted-foreground">Everyday</p>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          {ChallengeIcon && <ChallengeIcon className="h-4 w-4" />}
+                          <span>{challengeConfig[alarm.challenge]?.label || 'No Challenge'}</span>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -95,7 +114,7 @@ export default function AlarmPage() {
                 </div>
                 {index < alarms.length - 1 && <Separator className="mt-4" />}
               </div>
-            ))}
+            )})}
              {alarms.length === 0 && (
               <p className="text-center text-muted-foreground py-8">
                 You have no alarms set.
@@ -105,16 +124,41 @@ export default function AlarmPage() {
         </CardContent>
         <CardFooter className="flex flex-col items-start gap-4 border-t pt-6">
             <h3 className="font-semibold">Add New Alarm</h3>
-            <div className="flex w-full items-center gap-2">
-              <Label htmlFor="new-alarm-time" className="sr-only">Alarm time</Label>
-              <Input 
-                id="new-alarm-time"
-                type="time" 
-                value={newAlarmTime}
-                onChange={(e) => setNewAlarmTime(e.target.value)} 
-                className="w-48"
-              />
-              <Button onClick={handleAddAlarm}>
+            <div className="grid w-full grid-cols-1 md:grid-cols-3 items-end gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="new-alarm-time">Alarm time</Label>
+                <Input 
+                  id="new-alarm-time"
+                  type="time" 
+                  value={newAlarmTime}
+                  onChange={(e) => setNewAlarmTime(e.target.value)} 
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="new-alarm-challenge">Challenge</Label>
+                <Select
+                  value={newAlarmChallenge}
+                  onValueChange={(value) => setNewAlarmChallenge(value as ChallengeType)}
+                >
+                  <SelectTrigger id="new-alarm-challenge">
+                    <SelectValue placeholder="Select a challenge" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(challengeConfig) as ChallengeType[]).map((key) => {
+                      const ChallengeIcon = challengeConfig[key].icon;
+                      return (
+                        <SelectItem key={key} value={key}>
+                           <div className="flex items-center gap-2">
+                             {ChallengeIcon && <ChallengeIcon className="h-4 w-4 text-muted-foreground" />}
+                             <span>{challengeConfig[key].label}</span>
+                          </div>
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={handleAddAlarm} className="w-full">
                 <PlusCircle className="mr-2 h-4 w-4"/> Add Alarm
               </Button>
             </div>
