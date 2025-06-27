@@ -19,7 +19,6 @@ export default function SensiRiseApp() {
 
   useEffect(() => {
     setIsMounted(true);
-    setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
@@ -59,7 +58,7 @@ export default function SensiRiseApp() {
       <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-sm border-2 border-primary/20">
         <CardHeader className="text-center">
           <div className="flex justify-center items-center gap-2 text-primary">
-            <Sun className="w-8 h-8" />
+            <Sun className="w-8 h-8" suppressHydrationWarning />
             <CardTitle className="text-4xl font-headline">SensiRise</CardTitle>
           </div>
           <p className="text-muted-foreground pt-2">
@@ -88,9 +87,9 @@ export default function SensiRiseApp() {
               </div>
               <div className="flex items-center space-x-2">
                 {isAlarmOn ? (
-                  <Bell className="w-6 h-6 text-accent" />
+                  <Bell className="w-6 h-6 text-accent" suppressHydrationWarning />
                 ) : (
-                  <BellOff className="w-6 h-6 text-muted-foreground" />
+                  <BellOff className="w-6 h-6 text-muted-foreground" suppressHydrationWarning />
                 )}
                 <Switch
                   id="alarm-toggle"
