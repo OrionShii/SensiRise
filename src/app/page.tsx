@@ -2,7 +2,6 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -35,16 +34,15 @@ const challengeConfig: Record<ChallengeType, { label: string; icon?: React.Eleme
 
 
 export default function HomePage() {
-  const [userName] = useState("Alex");
-  const [alarms] = useState<Alarm[]>(mockAlarms);
-  const [mood] = useState({ emoji: "😊", label: "Content" });
+  const userName = "Alex";
+  const alarms: Alarm[] = mockAlarms;
+  const mood = { emoji: "😊", label: "Content" };
 
   const upcomingAlarms = alarms
     .filter((alarm) => alarm.enabled)
     .sort((a, b) => a.time.localeCompare(b.time));
 
   return (
-    <>
       <div className="container mx-auto">
         <div className="flex flex-col items-start gap-2 mb-8">
           <h1 className="text-3xl font-bold tracking-tight">Good morning, {userName}!</h1>
@@ -65,25 +63,28 @@ export default function HomePage() {
             <CardContent className="flex-grow">
               {upcomingAlarms.length > 0 ? (
                 <div className="space-y-4">
-                  {upcomingAlarms.map((alarm, index) => (
+                  {upcomingAlarms.map((alarm, index) => {
+                    const ChallengeIcon = challengeConfig[alarm.challenge]?.icon;
+                    return (
                       <div key={alarm.id}>
-                      <div className="flex items-center justify-between pt-4">
-                          <div className="flex items-center gap-4">
-                              <span className="text-xl font-bold font-mono text-primary">
-                              {alarm.time}
-                              </span>
-                              <div>
-                                  <p className="font-medium">{alarm.label}</p>
-                                  <p className="text-sm text-muted-foreground">{challengeConfig[alarm.challenge].label}</p>
-                              </div>
-                          </div>
-                          <div className="flex items-center text-muted-foreground">
-                              {challengeConfig[alarm.challenge].icon && <challengeConfig[alarm.challenge].icon className="h-5 w-5" />}
-                          </div>
-                      </div>
+                        <div className="flex items-center justify-between pt-4">
+                            <div className="flex items-center gap-4">
+                                <span className="text-xl font-bold font-mono text-primary">
+                                {alarm.time}
+                                </span>
+                                <div>
+                                    <p className="font-medium">{alarm.label}</p>
+                                    <p className="text-sm text-muted-foreground">{challengeConfig[alarm.challenge].label}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center text-muted-foreground">
+                                {ChallengeIcon && <ChallengeIcon className="h-5 w-5" />}
+                            </div>
+                        </div>
                         {index < upcomingAlarms.length - 1 && <Separator className="mt-4" />}
-                    </div>
-                  ))}
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="flex h-full flex-col items-center justify-center text-center py-10 rounded-lg bg-muted/50 my-4">
@@ -136,5 +137,5 @@ export default function HomePage() {
           </Card>
         </div>
       </div>
-    </>
   );
+}
