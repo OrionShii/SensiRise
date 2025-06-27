@@ -7,8 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Pencil, Trash2, PlusCircle, Gamepad2, BrainCircuit, ScanFace, ScanSearch } from "lucide-react";
+import { Pencil, Trash2, PlusCircle, Gamepad2, BrainCircuit, ScanFace, ScanSearch, Play } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChallengeDialog, ChallengeStep } from "@/components/challenge-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 type ChallengeType = 'none' | 'rps' | 'math' | 'face' | 'object';
 
@@ -40,6 +42,11 @@ export default function AlarmPage() {
   const [newAlarmTime, setNewAlarmTime] = useState('08:00');
   const [newAlarmChallenge, setNewAlarmChallenge] = useState<ChallengeType>('rps');
 
+  const [isChallengeActive, setIsChallengeActive] = useState(false);
+  const [activeChallenge, setActiveChallenge] = useState<ChallengeStep | null>(null);
+  const [challengingAlarmId, setChallengingAlarmId] = useState<string | null>(null);
+  const { toast } = useToast();
+
   const handleToggleAlarm = (id: string) => {
     setAlarms(
       alarms.map((alarm) =>
@@ -64,6 +71,38 @@ export default function AlarmPage() {
       setAlarms([...alarms, newAlarm]);
     }
   };
+
+  const handleTriggerChallenge = (alarmId: string, challenge: ChallengeType) => {
+    if (challenge === 'none') {
+      toast({
+        title: "No Challenge",
+        description: "This alarm has no challenge to test.",
+      });
+      return;
+    }
+    setChallengingAlarmId(alarmId);
+    setActiveChallenge(challenge as ChallengeStep);
+    setIsChallengeActive(true);
+  };
+
+  const handleChallengeComplete = () => {
+    setIsChallengeActive(false);
+    if (challengingAlarmId) {
+      // Find the alarm and disable it
+      setAlarms(
+        alarms.map((alarm) =>
+          alarm.id === challengingAlarmId ? { ...alarm, enabled: false } : alarm
+        )
+      );
+      toast({
+        title: "Alarm Deactivated!",
+        description: "You have successfully completed the challenge.",
+      });
+      setChallengingAlarmId(null);
+      setActiveChallenge(null);
+    }
+  };
+
 
   return (
     <div className="container mx-auto">
@@ -104,6 +143,10 @@ export default function AlarmPage() {
                       onCheckedChange={() => handleToggleAlarm(alarm.id)}
                       aria-label={`Toggle alarm for ${alarm.time}`}
                     />
+                     <Button variant="ghost" size="icon" onClick={() => handleTriggerChallenge(alarm.id, alarm.challenge)} title="Test Challenge">
+                      <Play className="h-4 w-4" />
+                      <span className="sr-only">Test Challenge</span>
+                    </Button>
                     <Button variant="ghost" size="icon">
                       <Pencil className="h-4 w-4" />
                       <span className="sr-only">Edit Alarm</span>
@@ -166,6 +209,12 @@ export default function AlarmPage() {
             </div>
         </CardFooter>
       </Card>
+      <ChallengeDialog
+        open={isChallengeActive}
+        onOpenChange={setIsChallengeActive}
+        onChallengeComplete={handleChallengeComplete}
+        challenges={activeChallenge ? [activeChallenge] : []}
+      />
     </div>
   );
 }
