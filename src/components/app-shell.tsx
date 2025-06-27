@@ -18,6 +18,9 @@ import {
 import { Home, AlarmClock, Music, Smile, User, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
+import { useEffect } from "react";
+import { useAlarm } from "@/context/alarm-context";
+import { AlarmTriggerDialog } from "./alarm-trigger-dialog";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
@@ -29,6 +32,32 @@ const navItems = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { alarms, triggerAlarm, triggeredAlarms, audioRef } = useAlarm();
+
+  // Real-time alarm checker
+  useEffect(() => {
+    const checkAlarms = () => {
+      const now = new Date();
+      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const today = now.toLocaleDateString();
+
+      for (const alarm of alarms) {
+        if (alarm.enabled && alarm.time === currentTime) {
+          const triggeredKey = `${alarm.id}-${today}`;
+          if (!triggeredAlarms.has(triggeredKey)) {
+            triggerAlarm(alarm);
+            break; // Trigger only the first matching alarm
+          }
+        }
+      }
+    };
+
+    // Check every second
+    const intervalId = setInterval(checkAlarms, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [alarms, triggerAlarm, triggeredAlarms]);
+
 
   return (
     <SidebarProvider>
@@ -70,6 +99,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
         <main className="flex flex-1 flex-col p-4 sm:p-6">{children}</main>
       </SidebarInset>
+      <audio ref={audioRef} />
+      <AlarmTriggerDialog />
     </SidebarProvider>
   );
 }

@@ -6,23 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { PlusCircle, Bell, Gamepad2, BrainCircuit, ScanFace, ScanSearch, Smile } from "lucide-react";
-
-// Re-using the types and mock data for consistency
-type ChallengeType = 'none' | 'rps' | 'math' | 'face' | 'object';
-type Alarm = {
-  id: string;
-  time: string;
-  enabled: boolean;
-  label: string;
-  challenge: ChallengeType;
-};
-
-const mockAlarms: Alarm[] = [
-  { id: '1', time: '07:00', enabled: true, label: 'Weekday Wake-up', challenge: 'rps' },
-  { id: '2', time: '09:00', enabled: false, label: 'Weekend Morning', challenge: 'math' },
-  { id: '3', time: '06:30', enabled: true, label: 'Early Bird', challenge: 'face' },
-  { id: '4', time: '08:30', enabled: true, label: 'Find your keys!', challenge: 'object' },
-];
+import { useAlarm, type ChallengeType } from "@/context/alarm-context";
 
 const challengeConfig: Record<ChallengeType, { label: string; icon?: React.ElementType }> = {
   none: { label: "No Challenge" },
@@ -34,8 +18,8 @@ const challengeConfig: Record<ChallengeType, { label: string; icon?: React.Eleme
 
 
 export default function HomePage() {
+  const { alarms } = useAlarm();
   const userName = "Alex";
-  const alarms: Alarm[] = mockAlarms;
   const mood = { emoji: "😊", label: "Content" };
 
   const upcomingAlarms = alarms

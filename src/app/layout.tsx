@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import './globals.css';
 import { AppShell } from '@/components/app-shell';
 import { ThemeProvider } from '@/components/theme-provider';
+import { AlarmProvider } from '@/context/alarm-context';
 
 export const metadata: Metadata = {
   title: 'SensiRise',
@@ -29,10 +30,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AppShell>
-            {children}
-          </AppShell>
-          <Toaster />
+          <AlarmProvider>
+            <AppShell>
+              {children}
+            </AppShell>
+            <Toaster />
+          </AlarmProvider>
         </ThemeProvider>
       </body>
     </html>

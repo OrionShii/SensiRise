@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -12,8 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ChallengeDialog, ChallengeStep } from "@/components/challenge-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-
-type ChallengeType = 'none' | 'rps' | 'math' | 'face' | 'object';
+import { useAlarm, type Alarm, type ChallengeType } from '@/context/alarm-context';
 
 const challengeConfig: Record<ChallengeType, { label: string; icon?: React.ElementType }> = {
   none: { label: "No Challenge" },
@@ -23,23 +23,9 @@ const challengeConfig: Record<ChallengeType, { label: string; icon?: React.Eleme
   object: { label: "Object Hunt", icon: ScanSearch },
 };
 
-type Alarm = {
-  id: string;
-  time: string;
-  enabled: boolean;
-  label: string;
-  challenge: ChallengeType;
-};
-
-const mockAlarms: Alarm[] = [
-  { id: '1', time: '07:00', enabled: true, label: 'Weekday Wake-up', challenge: 'rps' },
-  { id: '2', time: '09:00', enabled: false, label: 'Weekend Morning', challenge: 'math' },
-  { id: '3', time: '06:30', enabled: true, label: 'Early Bird', challenge: 'face' },
-  { id: '4', time: '08:30', enabled: true, label: 'Find your keys!', challenge: 'object' },
-];
-
 export default function AlarmPage() {
-  const [alarms, setAlarms] = useState<Alarm[]>(mockAlarms);
+  const { alarms, addAlarm, updateAlarm, deleteAlarm, toggleAlarm } = useAlarm();
+  
   const [newAlarmTime, setNewAlarmTime] = useState('08:00');
   const [newAlarmLabel, setNewAlarmLabel] = useState('New Alarm');
   const [newAlarmChallenge, setNewAlarmChallenge] = useState<ChallengeType>('rps');
@@ -52,29 +38,17 @@ export default function AlarmPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingAlarm, setEditingAlarm] = useState<Alarm | null>(null);
 
-  const handleToggleAlarm = (id: string) => {
-    setAlarms(
-      alarms.map((alarm) =>
-        alarm.id === id ? { ...alarm, enabled: !alarm.enabled } : alarm
-      )
-    );
-  };
-
-  const handleDeleteAlarm = (id: string) => {
-    setAlarms(alarms.filter((alarm) => alarm.id !== id));
-  };
-  
   const handleAddAlarm = () => {
     if (newAlarmTime) {
-      const newAlarm: Alarm = {
-        id: Date.now().toString(),
+      addAlarm({
         time: newAlarmTime,
-        enabled: true,
         label: newAlarmLabel,
         challenge: newAlarmChallenge,
-      };
-      setAlarms([...alarms, newAlarm]);
+        enabled: true,
+      });
+      setNewAlarmTime('08:00');
       setNewAlarmLabel('New Alarm');
+      setNewAlarmChallenge('rps');
     }
   };
 
@@ -94,11 +68,7 @@ export default function AlarmPage() {
   const handleChallengeComplete = () => {
     setIsChallengeActive(false);
     if (challengingAlarmId) {
-      setAlarms(
-        alarms.map((alarm) =>
-          alarm.id === challengingAlarmId ? { ...alarm, enabled: false } : alarm
-        )
-      );
+      toggleAlarm(challengingAlarmId);
       toast({
         title: "Alarm Deactivated!",
         description: "You have successfully completed the challenge.",
@@ -115,11 +85,7 @@ export default function AlarmPage() {
 
   const handleSaveChanges = () => {
     if (editingAlarm) {
-      setAlarms(
-        alarms.map((alarm) =>
-          alarm.id === editingAlarm.id ? editingAlarm : alarm
-        )
-      );
+      updateAlarm(editingAlarm);
       toast({
         title: "Alarm Updated",
         description: "Your alarm settings have been successfully saved.",
@@ -128,7 +94,6 @@ export default function AlarmPage() {
       setEditingAlarm(null);
     }
   };
-
 
   return (
     <div className="container mx-auto">
@@ -166,7 +131,7 @@ export default function AlarmPage() {
                     <Switch
                       id={`alarm-switch-${alarm.id}`}
                       checked={alarm.enabled}
-                      onCheckedChange={() => handleToggleAlarm(alarm.id)}
+                      onCheckedChange={() => toggleAlarm(alarm.id)}
                       aria-label={`Toggle alarm for ${alarm.time}`}
                     />
                      <Button variant="ghost" size="icon" onClick={() => handleTriggerChallenge(alarm.id, alarm.challenge)} title="Test Challenge">
@@ -177,7 +142,7 @@ export default function AlarmPage() {
                       <Pencil className="h-4 w-4" />
                       <span className="sr-only">Edit Alarm</span>
                     </Button>
-                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDeleteAlarm(alarm.id)}>
+                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => deleteAlarm(alarm.id)}>
                       <Trash2 className="h-4 w-4" />
                        <span className="sr-only">Delete Alarm</span>
                     </Button>
