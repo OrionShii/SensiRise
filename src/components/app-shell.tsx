@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Home, AlarmClock, Music, Smile, User, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "./theme-toggle";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
@@ -65,7 +66,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-background px-4 sm:px-6 md:justify-end">
             <SidebarTrigger className="md:hidden" />
-            {/* Future header content like a user dropdown can go here */}
+            <ThemeToggle />
         </header>
         <main className="flex flex-1 flex-col p-4 sm:p-6">{children}</main>
       </SidebarInset>
