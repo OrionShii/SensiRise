@@ -7,16 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Pencil, Trash2, PlusCircle, Gamepad2, BrainCircuit, ScanFace } from "lucide-react";
+import { Pencil, Trash2, PlusCircle, Gamepad2, BrainCircuit, ScanFace, ScanSearch } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-type ChallengeType = 'none' | 'rps' | 'math' | 'face';
+type ChallengeType = 'none' | 'rps' | 'math' | 'face' | 'object';
 
 const challengeConfig: Record<ChallengeType, { label: string; icon?: React.ElementType }> = {
   none: { label: "No Challenge" },
   rps: { label: "Rock, Paper, Scissors", icon: Gamepad2 },
   math: { label: "Math Question", icon: BrainCircuit },
   face: { label: "Awake Check", icon: ScanFace },
+  object: { label: "Object Hunt", icon: ScanSearch },
 };
 
 type Alarm = {
@@ -31,6 +32,7 @@ const mockAlarms: Alarm[] = [
   { id: '1', time: '07:00', enabled: true, label: 'Weekday Wake-up', challenge: 'rps' },
   { id: '2', time: '09:00', enabled: false, label: 'Weekend Morning', challenge: 'math' },
   { id: '3', time: '06:30', enabled: true, label: 'Early Bird', challenge: 'face' },
+  { id: '4', time: '08:30', enabled: true, label: 'Find your keys!', challenge: 'object' },
 ];
 
 export default function AlarmPage() {

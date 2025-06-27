@@ -11,6 +11,7 @@ import {
 import { FaceScanChallenge } from "@/components/face-scan-challenge";
 import { RpsChallenge } from "@/components/rps-challenge";
 import { MathChallenge } from "@/components/math-challenge";
+import { ObjectChallenge } from "@/components/object-challenge";
 import { Progress } from "@/components/ui/progress";
 
 type ChallengeDialogProps = {
@@ -19,7 +20,7 @@ type ChallengeDialogProps = {
   onChallengeComplete: () => void;
 };
 
-type ChallengeStep = 'rps' | 'math' | 'face';
+type ChallengeStep = 'rps' | 'object' | 'math' | 'face';
 
 const challengeConfig: Record<ChallengeStep, { title: string; description: string; step: number }> = {
   rps: {
@@ -27,15 +28,20 @@ const challengeConfig: Record<ChallengeStep, { title: string; description: strin
     description: "Win a game of rock-paper-scissors to proceed.",
     step: 1,
   },
-  math: {
-    title: "Step 2: Math Quiz",
-    description: "Solve a quick math problem.",
+  object: {
+    title: "Step 2: Object Hunt",
+    description: "Find the requested object and show it to the camera.",
     step: 2,
   },
-  face: {
-    title: "Step 3: Awake Check",
-    description: "Prove you're awake for the final step.",
+  math: {
+    title: "Step 3: Math Quiz",
+    description: "Solve a quick math problem.",
     step: 3,
+  },
+  face: {
+    title: "Step 4: Awake Check",
+    description: "Prove you're awake for the final step.",
+    step: 4,
   },
 };
 
@@ -54,6 +60,10 @@ export function ChallengeDialog({
   }, [open]);
 
   const handleRpsComplete = () => {
+    setCurrentStep('object');
+  };
+
+  const handleObjectComplete = () => {
     setCurrentStep('math');
   };
 
@@ -62,7 +72,7 @@ export function ChallengeDialog({
   };
 
   const currentChallenge = challengeConfig[currentStep];
-  const progressValue = (currentChallenge.step / 3) * 100;
+  const progressValue = (currentChallenge.step / 4) * 100;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -79,6 +89,9 @@ export function ChallengeDialog({
         <div>
           {currentStep === 'rps' && (
             <RpsChallenge onChallengeComplete={handleRpsComplete} />
+          )}
+          {currentStep === 'object' && (
+            <ObjectChallenge onChallengeComplete={handleObjectComplete} />
           )}
           {currentStep === 'math' && (
             <MathChallenge onChallengeComplete={handleMathComplete} />
