@@ -42,6 +42,7 @@ export function RpsChallenge({ onChallengeComplete }: RpsChallengeProps) {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.play();
         setHasCameraPermission(true);
       }
     } catch (err) {
