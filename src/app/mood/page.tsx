@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useMood } from "@/context/mood-context";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Zap } from "lucide-react";
 
 export default function MoodPage() {
   const { mood, updateBpm } = useMood();
@@ -74,6 +76,14 @@ export default function MoodPage() {
           </CardFooter>
         )}
       </Card>
+      
+      <Alert className="mt-8">
+        <Zap className="h-4 w-4" />
+        <AlertTitle>Coming Soon: Smartwatch Sync! ✨</AlertTitle>
+        <AlertDescription>
+          Seamless smartwatch integration for automatic mood detection based on your heart rate. No more manual input — just connect and feel the sync.
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }
